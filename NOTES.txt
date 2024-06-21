@@ -1,0 +1,2 @@
+Screen Wake Lock API to keep mobile devices awake
+Trystero + Sockets for managed & decentralized
