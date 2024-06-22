@@ -2,18 +2,17 @@ import TrysteroManager from "./networking/TrysteroManager";
 import { type UUID, type Message, type Player, type Topic } from "./Types";
 import { getRandomEmoji } from "./Utility";
 
-class GameManager {
+export default class GameManager {
     networkManager : TrysteroManager;
     gameCode? : string;
-    self : Player;
     hostId? : UUID;
     hosting : boolean = false;
+    self : Player;
 
     // Round specific variables
     players : Player[] = [];
     topics : Topic[] = [];
     messages : Message[] = [];
-
 
 
     constructor(name : string) {
@@ -22,15 +21,13 @@ class GameManager {
             uuid: <UUID>crypto.randomUUID(),
             name,
             emoji: getRandomEmoji(),
-            host: false
         }
     }
 
     createGame() {
         this.gameCode = this.networkManager.createNewRoom();
-        this.hosting = true;
-        this.self.host = true;
         this.hostId = this.self.uuid;
+        this.hosting = true;
         this.createMethods();
     } 
 
@@ -46,32 +43,44 @@ class GameManager {
     }
 
     createMethods() {
-        // this.networkManager.playerJoined = () => {
-        //     if (this.self.host) {
-        //         this.networkManager.sendPlayers(this.players, )
-        //     }
-        // }
-
-        this.networkManager.recievePlayers = (players : Player[]) => {
-            if (this.hosting && players.length == 1) {
-                this.players.push(players[0]);
-            } else {
-
-            }
-        }
+        this.networkManager.recieveHost = this.recieveHost;
+        this.networkManager.recievePlayers = this.recievePlayers;
+        this.networkManager.recieveTopics = this.recieveTopics;
+        this.networkManager.recieveMessages = this.recieveMessages;
+        this.networkManager.recieveJudging = this.recieveJudging;
+        this.networkManager.recieveJudgment = this.recieveJudgement;
     }
 
     //#region Network Events
 
-    recievePlayers(players : Player[]) {
-
+    recieveHost(hostId : UUID) {
+        this.hostId = hostId;
+        this.hosting = this.self.uuid === hostId;
     }
 
-
-
-
-
-    sendTopics() {
-        // this.networkManager.sendTopics();
+    recievePlayers(players : Player[], fromHost : boolean) {
+        if (fromHost) {
+            this.players = players;
+        } else if (!fromHost && players.length == 1) {
+            this.players.push(players[0]);
+        }
     }
+
+    recieveTopics(topics : Topic[]) {
+        this.topics = topics;
+    }
+
+    recieveMessages(messages : Message[]) {
+        this.messages = this.messages.concat(messages);
+    }
+
+    recieveJudging(judgeId : UUID) {
+        console.log("Not implemented " + judgeId);
+    }
+
+    recieveJudgement(messageId : UUID) {
+        console.log("Not implemented " + messageId);
+    }
+
+    //#endregion
 }

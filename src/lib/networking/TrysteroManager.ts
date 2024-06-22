@@ -4,12 +4,13 @@ import { type UUID, type Message, type Player, type Topic } from "$lib/Types";
 
 const APP_ID = "quotouflage-debug";
 
+// NOTE: NO AUTHENTICATION IN NETWORK MANAGERS
+// DO AUTHENTICATION IN THE GAME MANAGER TO REUSE CODE
 
 export default class TrysteroManager implements NetworkManager {
 
     roomConnection? : Room;
-    hostId? : UUID;
-    playerToPeerIdMap = new Map<UUID, string>();
+    hostPeerId? : string;
     
     createNewRoom() : string {
         // Generate new room code
@@ -41,46 +42,26 @@ export default class TrysteroManager implements NetworkManager {
         if (!this.roomConnection) return;
 
         // Create actions
-        [this._sendPlayers, this._recievePlayers] = this.roomConnection.makeAction("players");
+        [this.sendHost, this._recieveHost] = this.roomConnection.makeAction("host");  
+        [this.sendPlayers, this._recievePlayers] = this.roomConnection.makeAction("players");
         [this.sendTopics, this._recieveTopics] = this.roomConnection.makeAction("topics");
         [this.sendMessages, this._recieveMessages] = this.roomConnection.makeAction("messages");
-        [this._sendJudging, this._recieveJudging] = this.roomConnection.makeAction("judging");
-        [this._sendJudgement, this._recieveJudgment] = this.roomConnection.makeAction("judgement");  
+        [this.sendJudging, this._recieveJudging] = this.roomConnection.makeAction("judging");
+        [this.sendJudgement, this._recieveJudgment] = this.roomConnection.makeAction("judgement");  
 
         // Create implementable callbacks
         this.roomConnection?.onPeerJoin(() => this.playerJoined);
         this.roomConnection?.onPeerLeave(() => this.playerLeft);
 
-        this._recievePlayers((data, peerId) => {
-            const players = <Player[]>data;
-            if (!this.hostId || peerId == this.hostId) {
-                // NOTE: This means that the playerToPeerIdMap will never have already joined peers
-                const host = players.find(player => player.host)
-                if (host) {
-                    this.playerToPeerIdMap.set(host.uuid, peerId)
-                }
-                this.recievePlayers!(players);
-
-
-            } else if (players.length == 1) {
-                this.playerToPeerIdMap.set(players[0].uuid, peerId)
-                this.recievePlayers!(players);
-            } else {
-                console.warn("Ignoring multiple players from someone who is not host");
-            }
+        // Connect actions to callbacks
+        this._recieveHost((data, peerId) => {
+            this.hostPeerId = peerId;
+            this.recieveHost!(<UUID>data)
         });
-
-        this._recieveTopics(data => {this.recieveTopics!(<Topic[]>data)})
+        this._recievePlayers((data, peerId) => {this.recievePlayers!(<Player[]>data, peerId === this.hostPeerId);});
+        this._recieveTopics((data, peerId) => {if (peerId === this.hostPeerId) this.recieveTopics!(<Topic[]>data)})
         this._recieveMessages(data => {this.recieveMessages!(<Message[]>data)})
-
-        this._recieveJudging((data, peerId) => {
-            if (!this.hostId || peerId == this.hostId) {
-                this.recieveMessages!(<Message[]>data)
-            } else {
-                console.warn("Ignoring judging instruction from someone who is not host")
-            }
-        })
-
+        this._recieveJudging((data, peerId) => {if (peerId === this.hostPeerId) this.recieveJudging!(<UUID>data)})
         this._recieveJudgment(data => {this.recieveJudgment!(<UUID>data)})
     }
 
@@ -90,7 +71,10 @@ export default class TrysteroManager implements NetworkManager {
 
 
     //#region Gameplay Actions
-    _sendPlayers? : ActionSender<DataPayload>;
+    sendHost? : ActionSender<DataPayload>;
+    _recieveHost? : ActionReceiver<DataPayload>;
+
+    sendPlayers? : ActionSender<DataPayload>;
     _recievePlayers? : ActionReceiver<DataPayload>;
 
     sendTopics? : ActionSender<DataPayload>;
@@ -99,18 +83,15 @@ export default class TrysteroManager implements NetworkManager {
     sendMessages? : ActionSender<DataPayload>;
     _recieveMessages? : ActionReceiver<DataPayload>;
 
-    _sendJudging? : ActionSender<DataPayload>;
+    sendJudging? : ActionSender<DataPayload>;
     _recieveJudging? : ActionReceiver<DataPayload>;
 
-    _sendJudgement? : ActionSender<DataPayload>;
+    sendJudgement? : ActionSender<DataPayload>;
     _recieveJudgment? : ActionReceiver<DataPayload>;
     //#endregion
 
-    sendPlayers(players : Player[], target : UUID) {
-        this._sendPlayers!(players, this.playerToPeerIdMap.get(target))
-    }
-
-    recievePlayers? : (players : Player[]) => void;
+    recieveHost? : (hostId : UUID) => void;
+    recievePlayers? : (players : Player[], fromHost : boolean) => void;
     recieveTopics? : (topics : Topic[]) => void;
     recieveMessages? : (messages : Message[]) => void;
     recieveJudging? : (topicUUID : UUID) => void;

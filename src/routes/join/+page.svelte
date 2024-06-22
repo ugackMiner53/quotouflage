@@ -1,6 +1,8 @@
 <script lang="ts">
+    import ChooseName from "$lib/components/ChooseName.svelte";
     import { fade } from "svelte/transition";
 
+    let name : string|undefined;
     let pinInputs : HTMLInputElement[] = [];
     let pinCode : string[] = [];
 
@@ -41,6 +43,14 @@
 
 </script>
 
+{#if name == undefined}
+    <ChooseName bind:name={name} />
+{/if}
+
+<!-- <div class="name">
+    This is where the edit button that reopens the name chooser goes
+</div> -->
+
 <div class="main" in:fade={{delay: 300}} >
 
     <section out:fade={{delay:0, duration: 300}}>
@@ -70,7 +80,7 @@
         align-items: center;
         justify-content: space-around;
         position: fixed;
-        z-index: 99;
+        /* z-index: 1; */
         top: 0;
         left: 0;
         width: 100%;
