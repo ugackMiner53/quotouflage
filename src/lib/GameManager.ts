@@ -24,6 +24,10 @@ export default class GameManager {
         }
     }
 
+    updateSelf(newSelf : Player) {
+        this.self = newSelf;
+    }
+
     createGame() {
         this.gameCode = this.networkManager.createNewRoom();
         this.hostId = this.self.uuid;

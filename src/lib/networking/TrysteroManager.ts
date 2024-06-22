@@ -1,11 +1,9 @@
-import { joinRoom, type ActionReceiver, type ActionSender, type DataPayload, type Room } from "trystero";
+import { type ActionReceiver, type ActionSender, type DataPayload, type Room } from "trystero";
+import { joinRoom } from "trystero";
 import type NetworkManager from "./NetworkManager";
 import { type UUID, type Message, type Player, type Topic } from "$lib/Types";
 
 const APP_ID = "quotouflage-debug";
-
-// NOTE: NO AUTHENTICATION IN NETWORK MANAGERS
-// DO AUTHENTICATION IN THE GAME MANAGER TO REUSE CODE
 
 export default class TrysteroManager implements NetworkManager {
 
@@ -14,28 +12,22 @@ export default class TrysteroManager implements NetworkManager {
     
     createNewRoom() : string {
         // Generate new room code
-        const code = crypto.randomUUID().substring(0, 7).toUpperCase()
+        const code = crypto.randomUUID().substring(0, 6).toUpperCase()
         this.roomConnection = joinRoom({appId: APP_ID}, code)
-        if (Object.keys(this.roomConnection.getPeers()).length >= 1) {
-            console.warn(`Code ${code} was already in use! Regenerating...`);
-            this.roomConnection.leave();
-            return this.createNewRoom();
-        } else {
-            console.log(`Successfully created room ${code}`);
-            this.createMethods();
-            return code;
-        }
+        console.log(`Attempted to create room ${code}`);
+        this.createMethods();
+        return code;
     }
     
     connectToRoom(code: string): void {
         this.roomConnection = joinRoom({appId: APP_ID}, code);
-        if (Object.keys(this.roomConnection.getPeers()).length < 1) {
-            console.warn(`Code ${code} is not a valid code!`);
-            throw new Error("InvalidCodeException");
-        } else {
-            console.log(`Successfully connected to ${code}`);
+        // if (Object.keys(this.roomConnection.getPeers()).length < 1) {
+        //     console.warn(`Code ${code} is not a valid code!`);
+        //     throw new Error("InvalidCodeException");
+        // } else {
+        //     console.log(`Successfully connected to ${code}`);
             this.createMethods();
-        }
+        // }
     }
 
     createMethods() {
@@ -50,7 +42,8 @@ export default class TrysteroManager implements NetworkManager {
         [this.sendJudgement, this._recieveJudgment] = this.roomConnection.makeAction("judgement");  
 
         // Create implementable callbacks
-        this.roomConnection?.onPeerJoin(() => this.playerJoined);
+        console.log("Called")
+        this.roomConnection?.onPeerJoin(() => {console.log("PEER JOINED WHAT")});
         this.roomConnection?.onPeerLeave(() => this.playerLeft);
 
         // Connect actions to callbacks
@@ -66,7 +59,10 @@ export default class TrysteroManager implements NetworkManager {
     }
 
     // Implementable Methods
-    playerJoined?: (() => void);
+    // playerJoined?: (() => void);
+    playerJoined() {
+        console.log("PLAYER JOINED PLAYER JOINED")
+    }
     playerLeft?: (() => void);
 
 

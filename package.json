@@ -27,6 +27,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"trystero": "^0.18.0"
+		"@sveltejs/adapter-static": "^3.0.2",
+		"trystero": "0.19.0-beta0"
 	}
 }

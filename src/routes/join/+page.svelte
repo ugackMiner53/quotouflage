@@ -1,11 +1,16 @@
 <script lang="ts">
+    import { browser } from "$app/environment";
+    import GameManager from "$lib/GameManager";
+    import { gameManager, setManager } from "$lib/Static";
+    import type { UUID } from "$lib/Types";
+    import { getRandomEmoji } from "$lib/Utility";
     import ChooseName from "$lib/components/ChooseName.svelte";
+    import { get, writable, type Writable } from "svelte/store";
     import { fade } from "svelte/transition";
 
-    let name : string|undefined;
+    let name : Writable<string|undefined> = writable(browser ? localStorage.getItem("name") ?? undefined : undefined);
     let pinInputs : HTMLInputElement[] = [];
     let pinCode : string[] = [];
-
 
     function onPinClick() {
         if (pinCode.length < 0 || pinCode.length >= 6) return;
@@ -26,7 +31,7 @@
 
         
         if (pinCode.length == 6) {
-            // Try to join
+            joinGame()
         }
     }
 
@@ -39,17 +44,49 @@
         }
     }
 
+    function joinGame() {
+        const $name = get(name);
+        if (!$name) return;
 
+        updateManager($name);
+        if (gameManager.joinGame(pinCode.join("").toUpperCase())) {
+            console.log(`Joined ${pinCode.join("").toUpperCase()} correctly`)
+        } else {
+            console.log(`Did not join ${pinCode.join("").toUpperCase()} correctly`)
+        }
+    }
+
+    function createGame() {
+        const $name = get(name);
+        if (!$name) return;
+
+        console.log("Making game ccs")
+
+        updateManager($name);
+        gameManager.createGame();
+    }
+
+    function updateManager(name : string) {
+        if (!gameManager) {
+            setManager(new GameManager(name));
+        } else {
+            gameManager.updateSelf({
+                uuid: <UUID>crypto.randomUUID(),
+                name,
+                emoji: getRandomEmoji(),
+            })
+        }
+    }
 
 </script>
 
-{#if name == undefined}
-    <ChooseName bind:name={name} />
+{#if $name == undefined}
+    <ChooseName bind:name={$name} />
 {/if}
 
-<!-- <div class="name">
-    This is where the edit button that reopens the name chooser goes
-</div> -->
+<button class="name" on:click={() => {$name = undefined}}>
+    <p>{$name}</p>
+</button>
 
 <div class="main" in:fade={{delay: 300}} >
 
@@ -67,20 +104,44 @@
     </section>
     
     <section out:fade={{delay:0, duration: 300}}>
-        <button class="title create">Create Game</button>
+        <button class="title create" on:click={createGame}>Create Game</button>
     </section>
 
 </div>
 
 
 <style>
+    .name {
+        position: fixed;
+        top: 1vh;
+        right: 1vw;
+        width: 15vw;
+        height: fit-content;
+        min-height: 10vw;
+        background: none;
+        z-index: 1;
+        border: 3px dashed rgba(0, 0, 0, 0.5);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .name:hover {
+        border: 3px solid black;
+        background-color: lightgray;
+    }
+
+    .name > p {
+        font-size: 3vw;
+        margin: 0;
+    }
+
     .main {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: space-around;
         position: fixed;
-        /* z-index: 1; */
         top: 0;
         left: 0;
         width: 100%;
@@ -114,6 +175,7 @@
         border: none;
         border-bottom: 3px solid black;
         z-index: -1;
+        text-transform: uppercase;
     }
 
     .create {

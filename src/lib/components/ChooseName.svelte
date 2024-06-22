@@ -1,9 +1,9 @@
 <script lang="ts">
     import { browser } from "$app/environment";
 
-    export let name = browser ? localStorage.getItem("name") : undefined;
+    export let name;
 
-    let _name = name ?? "";
+    let _name = browser ? localStorage.getItem("name") ?? "" : "";
     let remember = false;
 </script>
 
@@ -20,7 +20,7 @@
             <input bind:value={remember} type="checkbox" name="" id="save-name-box">
             <label for="save-name-box">Remember my name</label>
         </div>
-        <button class="save" on:click={() => {name = _name; if (remember) {localStorage.setItem("name", name)}}}>Save</button>
+        <button class="save" on:click={() => {name = _name; if (remember) {localStorage.setItem("name", _name)}}}>Save</button>
     </section>
 </div>
 
