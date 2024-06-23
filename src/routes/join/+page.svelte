@@ -1,16 +1,22 @@
 <script lang="ts">
     import { browser } from "$app/environment";
+    import { goto } from "$app/navigation";
     import GameManager from "$lib/GameManager";
     import { gameManager, setManager } from "$lib/Static";
     import type { UUID } from "$lib/Types";
     import { getRandomEmoji } from "$lib/Utility";
     import ChooseName from "$lib/components/ChooseName.svelte";
+    import Connecting from "$lib/components/Connecting.svelte";
     import { get, writable, type Writable } from "svelte/store";
     import { fade } from "svelte/transition";
 
     let name : Writable<string|undefined> = writable(browser ? localStorage.getItem("name") ?? undefined : undefined);
     let pinInputs : HTMLInputElement[] = [];
     let pinCode : string[] = [];
+
+    // Room connection status
+    let connecting = writable(false);
+    let connectedPeers = writable(0);
 
     function onPinClick() {
         if (pinCode.length < 0 || pinCode.length >= 6) return;
@@ -44,26 +50,30 @@
         }
     }
 
-    function joinGame() {
+    async function joinGame() {
         const $name = get(name);
         if (!$name) return;
 
         updateManager($name);
-        if (gameManager.joinGame(pinCode.join("").toUpperCase())) {
+        connecting.set(true);
+        gameManager.joinGame(pinCode.join("").toUpperCase()).then(() => {
             console.log(`Joined ${pinCode.join("").toUpperCase()} correctly`)
-        } else {
+            goto("/lobby");    
+            connecting.set(false);
+        }).catch(() => {
             console.log(`Did not join ${pinCode.join("").toUpperCase()} correctly`)
-        }
+            // TODO: Consider showing an error message here at some point
+            connecting.set(false);
+        })
     }
 
     function createGame() {
         const $name = get(name);
         if (!$name) return;
 
-        console.log("Making game ccs")
-
         updateManager($name);
         gameManager.createGame();
+        goto("/lobby")
     }
 
     function updateManager(name : string) {
@@ -82,6 +92,22 @@
 
 {#if $name == undefined}
     <ChooseName bind:name={$name} />
+{/if}
+
+{#if $connecting}
+    <!-- TODO: Actually give this the correct number of connected peers :/ -->
+    <!-- TODO: Don't hide this when connected, only when host found -->
+    <Connecting 
+        on:cancel={() => {
+            pinCode = []
+            pinInputs.forEach(input => {
+                input.value = "";
+            })
+            $connecting = false;
+        }} 
+        connectedPeers={$connectedPeers} 
+        gameCode={pinCode.join("").toUpperCase()} 
+    />
 {/if}
 
 <button class="name" on:click={() => {$name = undefined}}>

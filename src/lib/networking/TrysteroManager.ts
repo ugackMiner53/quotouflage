@@ -2,6 +2,7 @@ import { type ActionReceiver, type ActionSender, type DataPayload, type Room } f
 import { joinRoom } from "trystero";
 import type NetworkManager from "./NetworkManager";
 import { type UUID, type Message, type Player, type Topic } from "$lib/Types";
+import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 
 const APP_ID = "quotouflage-debug";
 
@@ -12,21 +13,27 @@ export default class TrysteroManager implements NetworkManager {
     
     createNewRoom() : string {
         // Generate new room code
-        const code = crypto.randomUUID().substring(0, 6).toUpperCase()
+        const code = crypto.randomUUID().replaceAll("-", "").substring(0, parseInt(PUBLIC_PIN_LENGTH)).toUpperCase()
         this.roomConnection = joinRoom({appId: APP_ID}, code)
         console.log(`Attempted to create room ${code}`);
         this.createMethods();
         return code;
     }
     
-    connectToRoom(code: string): void {
+    connectToRoom(code: string): Promise<void> {
         this.roomConnection = joinRoom({appId: APP_ID}, code);
+        this.createMethods();
+
+        return new Promise(resolve => {
+            this.roomConnection?.onPeerJoin(() => {
+                resolve();
+            })
+        })
         // if (Object.keys(this.roomConnection.getPeers()).length < 1) {
         //     console.warn(`Code ${code} is not a valid code!`);
         //     throw new Error("InvalidCodeException");
         // } else {
         //     console.log(`Successfully connected to ${code}`);
-            this.createMethods();
         // }
     }
 
@@ -43,7 +50,6 @@ export default class TrysteroManager implements NetworkManager {
 
         // Create implementable callbacks
         console.log("Called")
-        this.roomConnection?.onPeerJoin(() => {console.log("PEER JOINED WHAT")});
         this.roomConnection?.onPeerLeave(() => this.playerLeft);
 
         // Connect actions to callbacks
@@ -59,10 +65,7 @@ export default class TrysteroManager implements NetworkManager {
     }
 
     // Implementable Methods
-    // playerJoined?: (() => void);
-    playerJoined() {
-        console.log("PLAYER JOINED PLAYER JOINED")
-    }
+    // playerJoined?: (() => void); // Likely not needed because player objects should be sent through sendPlayers();
     playerLeft?: (() => void);
 
 

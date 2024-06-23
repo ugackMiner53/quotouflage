@@ -35,19 +35,21 @@ export default class GameManager {
         this.createMethods();
     } 
 
-    joinGame(code : string) : boolean {
-        try {
-            this.networkManager.connectToRoom(code);
-        } catch {
-            return false;
-        }
+    async joinGame(code : string) : Promise<void> {
+        await this.networkManager.connectToRoom(code);
+        // Wait to recieve Host here
+        
         this.gameCode = code;
         this.createMethods();
-        return true;
+        
+        this.networkManager.recieveHost = (hostId : UUID) => {
+            this.hostId = hostId;
+            this.hosting = this.self.uuid === hostId
+        }
+
     }
 
     createMethods() {
-        this.networkManager.recieveHost = this.recieveHost;
         this.networkManager.recievePlayers = this.recievePlayers;
         this.networkManager.recieveTopics = this.recieveTopics;
         this.networkManager.recieveMessages = this.recieveMessages;
@@ -56,11 +58,6 @@ export default class GameManager {
     }
 
     //#region Network Events
-
-    recieveHost(hostId : UUID) {
-        this.hostId = hostId;
-        this.hosting = this.self.uuid === hostId;
-    }
 
     recievePlayers(players : Player[], fromHost : boolean) {
         if (fromHost) {

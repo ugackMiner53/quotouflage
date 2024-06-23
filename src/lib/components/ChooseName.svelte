@@ -1,5 +1,6 @@
 <script lang="ts">
     import { browser } from "$app/environment";
+    import Popup from "./Popup.svelte";
 
     export let name;
 
@@ -8,49 +9,22 @@
 </script>
 
 
-<div class="name">
-    <section>
-        <div class="together">
-            <h1 class="title">Choose Your Name</h1>
-            <p>Make sure to choose a name that people you're playing with will recognize as <u>you</u>!</p>
-        </div>
-        <br>
-        <input bind:value={_name} class="nameInput" type="text" name="Name Input" placeholder="Enter your name">
-        <div class="saveName">
-            <input bind:value={remember} type="checkbox" name="" id="save-name-box">
-            <label for="save-name-box">Remember my name</label>
-        </div>
-        <button class="save" on:click={() => {name = _name; if (remember) {localStorage.setItem("name", _name)}}}>Save</button>
-    </section>
-</div>
+<Popup>
+    <div class="together">
+        <h1 class="title">Choose Your Name</h1>
+        <p>Make sure to choose a name that people you're playing with will recognize as <u>you</u>!</p>
+    </div>
+    <br>
+    <input bind:value={_name} class="nameInput" type="text" name="Name Input" placeholder="Enter your name">
+    <div class="saveName">
+        <input bind:value={remember} type="checkbox" name="" id="save-name-box">
+        <label for="save-name-box">Remember my name</label>
+    </div>
+    <button class="save" on:click={() => {name = _name; if (remember) {localStorage.setItem("name", _name)}}}>Save</button>
+</Popup>
 
 
 <style>
-    .name {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: fixed;
-        z-index: 10;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
-
-    .name > section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: space-evenly;
-        /* gap: 3vh; */
-        width: 90%;
-        height: 90%;
-        border-radius: 24px;
-        background: lightgray;
-        border: 3px solid black;
-    }
-
     p {
         margin: 3vw;
         text-align: center;
