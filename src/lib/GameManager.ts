@@ -1,3 +1,4 @@
+import { writable, type Writable } from "svelte/store";
 import TrysteroManager from "./networking/TrysteroManager";
 import { type UUID, type Message, type Player, type Topic } from "./Types";
 import { getRandomEmoji } from "./Utility";
@@ -10,7 +11,7 @@ export default class GameManager {
     self : Player;
 
     // Round specific variables
-    players : Player[] = [];
+    players : Writable<Player[]> = writable([]);
     topics : Topic[] = [];
     messages : Message[] = [];
 
@@ -19,10 +20,10 @@ export default class GameManager {
         this.networkManager = new TrysteroManager();
         this.self = {
             uuid: <UUID>crypto.randomUUID(),
-            name,
+            name: name.toUpperCase(),
             emoji: getRandomEmoji(),
         }
-        this.players[0] = this.self;
+        this.players.set([this.self])
     }
 
     updateSelf(newSelf : Player) {
@@ -64,9 +65,12 @@ export default class GameManager {
 
     recievePlayers(players : Player[], fromHost : boolean) {
         if (fromHost) {
-            this.players = players;
+            this.players.set(players);
         } else if (!fromHost && players.length == 1) {
-            this.players.push(players[0]);
+            this.players.update(newPlayers => {
+                newPlayers.push(players[0]);
+                return newPlayers;
+            })
         }
     }
 

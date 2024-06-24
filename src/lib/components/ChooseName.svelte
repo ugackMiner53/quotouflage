@@ -15,12 +15,12 @@
         <p>Make sure to choose a name that people you're playing with will recognize as <u>you</u>!</p>
     </div>
     <br>
-    <input bind:value={_name} class="nameInput" type="text" name="Name Input" placeholder="Enter your name">
+    <input bind:value={_name} class="nameInput" type="text" name="Name Input" placeholder="Enter Your Name">
     <div class="saveName">
         <input bind:value={remember} type="checkbox" name="" id="save-name-box">
         <label for="save-name-box">Remember my name</label>
     </div>
-    <button class="save" on:click={() => {name = _name; if (remember) {localStorage.setItem("name", _name)}}}>Save</button>
+    <button class="save" on:click={() => {name = _name.toUpperCase(); if (remember) {localStorage.setItem("name", _name)}}}>Save</button>
 </Popup>
 
 
@@ -40,10 +40,12 @@
         font-size: 3vw;
         font-weight: bold;
         transition: 0.5s;
+        text-transform: uppercase;
     }
 
     .nameInput:placeholder-shown {
         border: 3px dashed rgba(0, 0, 0, 0.5);
+        text-transform: none;
     }
 
     .saveName {
