@@ -22,6 +22,7 @@ export default class GameManager {
             name,
             emoji: getRandomEmoji(),
         }
+        this.players[0] = this.self;
     }
 
     updateSelf(newSelf : Player) {
@@ -32,21 +33,23 @@ export default class GameManager {
         this.gameCode = this.networkManager.createNewRoom();
         this.hostId = this.self.uuid;
         this.hosting = true;
+        this.self.emoji = "👑";
         this.createMethods();
     } 
 
     async joinGame(code : string) : Promise<void> {
         await this.networkManager.connectToRoom(code);
-        // Wait to recieve Host here
-        
         this.gameCode = code;
         this.createMethods();
         
-        this.networkManager.recieveHost = (hostId : UUID) => {
-            this.hostId = hostId;
-            this.hosting = this.self.uuid === hostId
-        }
-
+        // Wait to recieve Host before saying we're connected
+        return new Promise(resolve => {
+            this.networkManager.recieveHost = (hostId : UUID) => {
+                this.hostId = hostId;
+                this.hosting = this.self.uuid === hostId
+                resolve();
+            }
+        })
     }
 
     createMethods() {

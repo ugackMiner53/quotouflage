@@ -1,14 +1,16 @@
 <script lang="ts">
     import { browser } from "$app/environment";
     import { goto } from "$app/navigation";
-    import GameManager from "$lib/GameManager";
-    import { gameManager, setManager } from "$lib/Static";
+    import { PUBLIC_PIN_LENGTH } from "$env/static/public";
+    import { gameManager, createNewGameManager } from "$lib/Static";
     import type { UUID } from "$lib/Types";
     import { getRandomEmoji } from "$lib/Utility";
     import ChooseName from "$lib/components/ChooseName.svelte";
     import Connecting from "$lib/components/Connecting.svelte";
     import { get, writable, type Writable } from "svelte/store";
     import { fade } from "svelte/transition";
+
+    const PIN_LENGTH = parseInt(PUBLIC_PIN_LENGTH)
 
     let name : Writable<string|undefined> = writable(browser ? localStorage.getItem("name") ?? undefined : undefined);
     let pinInputs : HTMLInputElement[] = [];
@@ -19,7 +21,7 @@
     let connectedPeers = writable(0);
 
     function onPinClick() {
-        if (pinCode.length < 0 || pinCode.length >= 6) return;
+        if (pinCode.length < 0 || pinCode.length >= PIN_LENGTH) return;
 
         pinInputs[pinCode.length].focus();
     }
@@ -36,7 +38,7 @@
         }
 
         
-        if (pinCode.length == 6) {
+        if (pinCode.length == PIN_LENGTH) {
             joinGame()
         }
     }
@@ -78,7 +80,7 @@
 
     function updateManager(name : string) {
         if (!gameManager) {
-            setManager(new GameManager(name));
+            createNewGameManager(name);
         } else {
             gameManager.updateSelf({
                 uuid: <UUID>crypto.randomUUID(),
@@ -96,7 +98,6 @@
 
 {#if $connecting}
     <!-- TODO: Actually give this the correct number of connected peers :/ -->
-    <!-- TODO: Don't hide this when connected, only when host found -->
     <Connecting 
         on:cancel={() => {
             pinCode = []
@@ -119,12 +120,9 @@
     <section out:fade={{delay:0, duration: 300}}>
         <h1 class="title">Join Game</h1>
         <button class="pin-input" on:focus={onPinClick}>
-            <input bind:this={pinInputs[0]} on:input={(e) => {handlePinInput(e, 0)}} on:keydown={handlePinBack} type="text" maxlength="1" tabindex="-1">
-            <input bind:this={pinInputs[1]} on:input={(e) => {handlePinInput(e, 1)}} on:keydown={handlePinBack} type="text" maxlength="1" tabindex="-1">
-            <input bind:this={pinInputs[2]} on:input={(e) => {handlePinInput(e, 2)}} on:keydown={handlePinBack} type="text" maxlength="1" tabindex="-1">
-            <input bind:this={pinInputs[3]} on:input={(e) => {handlePinInput(e, 3)}} on:keydown={handlePinBack} type="text" maxlength="1" tabindex="-1">
-            <input bind:this={pinInputs[4]} on:input={(e) => {handlePinInput(e, 4)}} on:keydown={handlePinBack} type="text" maxlength="1" tabindex="-1">
-            <input bind:this={pinInputs[5]} on:input={(e) => {handlePinInput(e, 5)}} on:keydown={handlePinBack} type="text" maxlength="1" tabindex="-1">
+            {#each {length: PIN_LENGTH} as _, i}
+                <input bind:this={pinInputs[i]} on:input={(e) => {handlePinInput(e, i)}} on:keydown={handlePinBack} type="text" maxlength="1" tabindex="-1">
+            {/each}
             <!-- <button>GO</button> -->
         </button>
     </section>

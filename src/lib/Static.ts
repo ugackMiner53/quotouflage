@@ -1,7 +1,7 @@
-import type GameManager from "./GameManager";
+import GameManager from "./GameManager";
 
 export let gameManager : GameManager;
 
-export function setManager(manager : GameManager) {
-    gameManager = manager;
+export function createNewGameManager(name : string) {
+    gameManager = new GameManager(name);
 }
