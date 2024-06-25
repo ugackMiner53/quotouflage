@@ -1,4 +1,4 @@
-import { writable, type Writable } from "svelte/store";
+import { get, writable, type Writable } from "svelte/store";
 import TrysteroManager from "./networking/TrysteroManager";
 import { type UUID, type Message, type Player, type Topic } from "./Types";
 import { getRandomEmoji } from "./Utility";
@@ -31,29 +31,36 @@ export default class GameManager {
     }
 
     createGame() {
+        this.createMethods();
+
         this.gameCode = this.networkManager.createNewRoom();
         this.hostId = this.self.uuid;
         this.hosting = true;
         this.self.emoji = "👑";
-        this.createMethods();
     } 
 
     async joinGame(code : string) : Promise<void> {
-        await this.networkManager.connectToRoom(code);
         this.gameCode = code;
         this.createMethods();
         
+        await this.networkManager.connectToRoom(code);
+        
+        console.log("Got past blocking connectToRoom")
+
         // Wait to recieve Host before saying we're connected
         return new Promise(resolve => {
             this.networkManager.recieveHost = (hostId : UUID) => {
+                console.log("recieveed hsot")
                 this.hostId = hostId;
                 this.hosting = this.self.uuid === hostId
+                this.networkManager.sendPlayers!(get(this.players))
                 resolve();
             }
         })
     }
 
     createMethods() {
+        this.networkManager.playerJoined = this.playerJoined;
         this.networkManager.recievePlayers = this.recievePlayers;
         this.networkManager.recieveTopics = this.recieveTopics;
         this.networkManager.recieveMessages = this.recieveMessages;
@@ -63,14 +70,28 @@ export default class GameManager {
 
     //#region Network Events
 
+    playerJoined() {
+        console.log("SECOND PEER JOIN OMG OMG ");
+        console.log(`WTF im hosting: ${this.hosting}`)
+        console.log(this);
+        if (this.hosting) {
+            console.log("IM HOSTING, the UUID " + this.self.uuid + " IS GOING OUT");
+            this.networkManager.sendHost!(this.self.uuid);
+        }
+    }
+
     recievePlayers(players : Player[], fromHost : boolean) {
+        console.log("I GOT PLAYERS");
         if (fromHost) {
             this.players.set(players);
-        } else if (!fromHost && players.length == 1) {
+        } else if (this.hosting && !fromHost && players.length == 1) {
             this.players.update(newPlayers => {
                 newPlayers.push(players[0]);
                 return newPlayers;
             })
+            if (this.hosting) {
+                this.networkManager.sendPlayers!(get(this.players));
+            }
         }
     }
 

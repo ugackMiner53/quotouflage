@@ -1,36 +1,14 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import type GameManager from "$lib/GameManager";
-    import { createNewGameManager, gameManager } from "$lib/Static";
-    import type { Player, UUID } from "$lib/Types";
-    import { getRandomEmoji } from "$lib/Utility";
+    import { gameManager } from "$lib/Static";
+    import type { Player } from "$lib/Types";
     import type { Writable } from "svelte/store";
 
-
     if (!gameManager) {
-        createNewGameManager("LIA");
-        createFakeManager();
-        // goto("/join");
+        goto("/join");
     }
 
     const players : Writable<Player[]> = gameManager.players;
-
-
-    function createFakeManager() {
-        gameManager.self.emoji = "👑"
-        gameManager.gameCode = "7XMNPQ";
-        for (let i=0; i<20; i++) {
-            const fakePlayer = {
-                name: Math.random().toString(36).substr(2, Math.floor(Math.random()*15)).toUpperCase(),
-                emoji: getRandomEmoji(),
-                uuid: <UUID>crypto.randomUUID()
-            }
-            gameManager.players.update(newPlayers => {
-                newPlayers.push(fakePlayer);
-                return newPlayers;
-            })
-        }
-    }
 </script>
 
 <h1 class="gamecode">{gameManager.gameCode}</h1>
@@ -50,14 +28,6 @@
         {/each}
     </div>
 </section>
-
-<button on:click={() => {
-    gameManager.recievePlayers([{
-        name: "Bibbity bob",
-        emoji: getRandomEmoji(),
-        uuid: crypto.randomUUID()
-    }], false)
-}}>CLICK ME</button>
 
 <style>
     .gamecode {
@@ -100,8 +70,6 @@
     .player {
         border: 3px double black;
         padding: 3vw;
-        /* width: 3vw; */
-        /* min-width: 3vw; */
         text-align: center;
         cursor: default;
     }

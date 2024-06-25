@@ -1,5 +1,5 @@
 import { type ActionReceiver, type ActionSender, type DataPayload, type Room } from "trystero";
-import { joinRoom } from "trystero";
+import { joinRoom } from "trystero/torrent";
 import type NetworkManager from "./NetworkManager";
 import { type UUID, type Message, type Player, type Topic } from "$lib/Types";
 import { PUBLIC_PIN_LENGTH } from "$env/static/public";
@@ -22,10 +22,12 @@ export default class TrysteroManager implements NetworkManager {
     
     connectToRoom(code: string): Promise<void> {
         this.roomConnection = joinRoom({appId: APP_ID}, code);
-        this.createMethods();
 
         return new Promise(resolve => {
             this.roomConnection?.onPeerJoin(() => {
+                console.log("FIRST PEER JOIN STATEMENT")
+                this.createMethods();
+                this.playerJoined!();
                 resolve();
             })
         })
@@ -38,7 +40,10 @@ export default class TrysteroManager implements NetworkManager {
     }
 
     createMethods() {
-        if (!this.roomConnection) return;
+        if (!this.roomConnection) {
+            console.error("Room connection not init before createMethods in TrysteroManager")
+            return;
+        }
 
         // Create actions
         [this.sendHost, this._recieveHost] = this.roomConnection.makeAction("host");  
@@ -49,11 +54,15 @@ export default class TrysteroManager implements NetworkManager {
         [this.sendJudgement, this._recieveJudgment] = this.roomConnection.makeAction("judgement");  
 
         // Create implementable callbacks
-        console.log("Called")
+        this.roomConnection?.onPeerJoin(() => {
+            console.log("Intermediate intercept stage one");
+            this.playerJoined!();
+        });
         this.roomConnection?.onPeerLeave(() => this.playerLeft);
 
         // Connect actions to callbacks
         this._recieveHost((data, peerId) => {
+            console.log("intermediate intercept host stage two")
             this.hostPeerId = peerId;
             this.recieveHost!(<UUID>data)
         });
@@ -65,7 +74,7 @@ export default class TrysteroManager implements NetworkManager {
     }
 
     // Implementable Methods
-    // playerJoined?: (() => void); // Likely not needed because player objects should be sent through sendPlayers();
+    playerJoined?: (() => void); // Likely not needed because player objects should be sent through sendPlayers();
     playerLeft?: (() => void);
 
 
