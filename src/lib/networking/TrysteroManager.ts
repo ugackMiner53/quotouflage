@@ -6,6 +6,8 @@ import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 
 const APP_ID = "quotouflage-debug";
 
+// type TrysteroPlayer = Player & {peerId : string}
+
 export default class TrysteroManager extends EventTarget implements NetworkManager {
 
     roomConnection? : Room;
@@ -25,25 +27,15 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
 
         return new Promise(resolve => {
             this.roomConnection?.onPeerJoin(() => {
-                console.log("FIRST PEER JOIN STATEMENT")
                 this.createMethods();
                 dispatchEvent(new Event("join"));
                 resolve();
             })
         })
-        // if (Object.keys(this.roomConnection.getPeers()).length < 1) {
-        //     console.warn(`Code ${code} is not a valid code!`);
-        //     throw new Error("InvalidCodeException");
-        // } else {
-        //     console.log(`Successfully connected to ${code}`);
-        // }
     }
 
     createMethods() {
-        if (!this.roomConnection) {
-            console.error("Room connection not init before createMethods in TrysteroManager")
-            return;
-        }
+        if (!this.roomConnection) return;
 
         // Create actions
         let recieveHost : ActionReceiver<DataPayload>, recievePlayers : ActionReceiver<DataPayload>, recieveTopics : ActionReceiver<DataPayload>, recieveMessages : ActionReceiver<DataPayload>, recieveJudging : ActionReceiver<DataPayload>, recieveJudgment : ActionReceiver<DataPayload>;
@@ -54,20 +46,21 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         [this.sendJudging, recieveJudging] = this.roomConnection.makeAction("judging");
         [this.sendJudgement, recieveJudgment] = this.roomConnection.makeAction("judgement");  
 
-        // Create implementable callbacks
+        // Add events for peer join/leave
         this.roomConnection?.onPeerJoin(() => {
             console.log("Intermediate intercept stage one");
             this.dispatchEvent(new Event("join"));
         });
+
+        // TODO Not sure how to handle players leaving when we don't know their ID from GameManager and we don't know the players from TrysteroManager
         this.roomConnection?.onPeerLeave(() => {
             this.dispatchEvent(new Event("leave"));
         });
 
-        // Connect actions to callbacks
+        // Connect actions to events
         recieveHost((data : DataPayload, peerId : string) => {
-            console.log("[TrysteroManager] Host Recieved, dispatching event...")
             this.hostPeerId = peerId;
-            this.createAndDispatchEvent<UUID>("host", <UUID>data);
+            this.createAndDispatchEvent("host", <UUID>data);
         });
 
         recievePlayers((data : DataPayload, peerId : string) => {

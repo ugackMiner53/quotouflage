@@ -42,11 +42,8 @@ export default class GameManager {
     async joinGame(code : string) : Promise<void> {
         this.gameCode = code;
         this.createMethods();
-        
         await this.networkManager.connectToRoom(code);
         
-        console.log("Got past blocking connectToRoom")
-
         // Wait to recieve Host before saying we're connected
         return new Promise(resolve => {
             this.networkManager.addEventListener("host", (event : CustomEventInit<UUID>) => {
@@ -92,6 +89,12 @@ export default class GameManager {
         if (this.hosting) {
             console.log("IM HOSTING, the UUID " + this.self.uuid + " IS GOING OUT");
             this.networkManager.sendHost!(this.self.uuid);
+        }
+    }
+
+    playerLeft() {
+        if (this.hosting) {
+            this.networkManager.sendPlayers!(get(this.players));
         }
     }
 
