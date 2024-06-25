@@ -49,23 +49,38 @@ export default class GameManager {
 
         // Wait to recieve Host before saying we're connected
         return new Promise(resolve => {
-            this.networkManager.recieveHost = (hostId : UUID) => {
-                console.log("recieveed hsot")
-                this.hostId = hostId;
-                this.hosting = this.self.uuid === hostId
-                this.networkManager.sendPlayers!(get(this.players))
+            this.networkManager.addEventListener("host", (event : CustomEventInit<UUID>) => {
+                console.log("Recieved Host");
+                this.hostId = event.detail;
+                this.hosting = this.self.uuid === this.hostId;
+                this.networkManager.sendPlayers!(get(this.players));
                 resolve();
-            }
+            })
         })
     }
 
     createMethods() {
-        this.networkManager.playerJoined = this.playerJoined;
-        this.networkManager.recievePlayers = this.recievePlayers;
-        this.networkManager.recieveTopics = this.recieveTopics;
-        this.networkManager.recieveMessages = this.recieveMessages;
-        this.networkManager.recieveJudging = this.recieveJudging;
-        this.networkManager.recieveJudgment = this.recieveJudgement;
+        this.networkManager.addEventListener("join", () => {this.playerJoined()});
+
+        this.networkManager.addEventListener("players", (event : CustomEventInit<{players: Player[], isHost : boolean}>) => {
+            this.recievePlayers(event.detail!.players, event.detail!.isHost);
+        })
+
+        this.networkManager.addEventListener("topics", (event : CustomEventInit<Topic[]>) => {
+            this.recieveTopics(event.detail!);
+        })
+
+        this.networkManager.addEventListener("messages", (event : CustomEventInit<Message[]>) => {
+            this.recieveMessages(event.detail!);
+        })
+
+        this.networkManager.addEventListener("judging", (event : CustomEventInit<UUID>) => {
+            this.recieveJudging(event.detail!);
+        })
+
+        this.networkManager.addEventListener("judgement", (event : CustomEventInit<UUID>) => {
+            this.recieveJudgement(event.detail!);
+        })
     }
 
     //#region Network Events

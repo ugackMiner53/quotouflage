@@ -6,7 +6,7 @@ import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 
 const APP_ID = "quotouflage-debug";
 
-export default class TrysteroManager implements NetworkManager {
+export default class TrysteroManager extends EventTarget implements NetworkManager {
 
     roomConnection? : Room;
     hostPeerId? : string;
@@ -27,7 +27,7 @@ export default class TrysteroManager implements NetworkManager {
             this.roomConnection?.onPeerJoin(() => {
                 console.log("FIRST PEER JOIN STATEMENT")
                 this.createMethods();
-                this.playerJoined!();
+                dispatchEvent(new Event("join"));
                 resolve();
             })
         })
@@ -46,63 +46,75 @@ export default class TrysteroManager implements NetworkManager {
         }
 
         // Create actions
-        [this.sendHost, this._recieveHost] = this.roomConnection.makeAction("host");  
-        [this.sendPlayers, this._recievePlayers] = this.roomConnection.makeAction("players");
-        [this.sendTopics, this._recieveTopics] = this.roomConnection.makeAction("topics");
-        [this.sendMessages, this._recieveMessages] = this.roomConnection.makeAction("messages");
-        [this.sendJudging, this._recieveJudging] = this.roomConnection.makeAction("judging");
-        [this.sendJudgement, this._recieveJudgment] = this.roomConnection.makeAction("judgement");  
+        let recieveHost : ActionReceiver<DataPayload>, recievePlayers : ActionReceiver<DataPayload>, recieveTopics : ActionReceiver<DataPayload>, recieveMessages : ActionReceiver<DataPayload>, recieveJudging : ActionReceiver<DataPayload>, recieveJudgment : ActionReceiver<DataPayload>;
+        [this.sendHost, recieveHost] = this.roomConnection.makeAction("host");  
+        [this.sendPlayers, recievePlayers] = this.roomConnection.makeAction("players");
+        [this.sendTopics, recieveTopics] = this.roomConnection.makeAction("topics");
+        [this.sendMessages, recieveMessages] = this.roomConnection.makeAction("messages");
+        [this.sendJudging, recieveJudging] = this.roomConnection.makeAction("judging");
+        [this.sendJudgement, recieveJudgment] = this.roomConnection.makeAction("judgement");  
 
         // Create implementable callbacks
         this.roomConnection?.onPeerJoin(() => {
             console.log("Intermediate intercept stage one");
-            this.playerJoined!();
+            this.dispatchEvent(new Event("join"));
         });
-        this.roomConnection?.onPeerLeave(() => this.playerLeft);
+        this.roomConnection?.onPeerLeave(() => {
+            this.dispatchEvent(new Event("leave"));
+        });
 
         // Connect actions to callbacks
-        this._recieveHost((data, peerId) => {
-            console.log("intermediate intercept host stage two")
+        recieveHost((data : DataPayload, peerId : string) => {
+            console.log("[TrysteroManager] Host Recieved, dispatching event...")
             this.hostPeerId = peerId;
-            this.recieveHost!(<UUID>data)
+            this.createAndDispatchEvent<UUID>("host", <UUID>data);
         });
-        this._recievePlayers((data, peerId) => {this.recievePlayers!(<Player[]>data, peerId === this.hostPeerId);});
-        this._recieveTopics((data, peerId) => {if (peerId === this.hostPeerId) this.recieveTopics!(<Topic[]>data)})
-        this._recieveMessages(data => {this.recieveMessages!(<Message[]>data)})
-        this._recieveJudging((data, peerId) => {if (peerId === this.hostPeerId) this.recieveJudging!(<UUID>data)})
-        this._recieveJudgment(data => {this.recieveJudgment!(<UUID>data)})
+
+        recievePlayers((data : DataPayload, peerId : string) => {
+            this.createAndDispatchEvent(
+                "players", 
+                {
+                    players: <Player[]>data,
+                    isHost: peerId === this.hostPeerId
+                }
+            );
+        });
+
+        recieveTopics((data : DataPayload, peerId : string) => {
+            if (peerId === this.hostPeerId) {
+                this.createAndDispatchEvent("topics", <Topic[]>data);
+            }
+        });
+
+        recieveMessages(data => {
+            this.createAndDispatchEvent("messages", <Message[]>data);
+        });
+
+        recieveJudging((data, peerId) => {
+            if (peerId === this.hostPeerId) {
+                this.createAndDispatchEvent("judging", <UUID>data);
+            }
+        });
+
+        recieveJudgment(data => {
+            this.createAndDispatchEvent("judgment", <UUID>data);
+        });
     }
 
-    // Implementable Methods
-    playerJoined?: (() => void); // Likely not needed because player objects should be sent through sendPlayers();
-    playerLeft?: (() => void);
+    // Utility function for creating & sending CustomEvent(s)
+    createAndDispatchEvent<Type>(eventName : string, detailType : Type) {
+        const customEvent : CustomEvent<Type> = new CustomEvent(eventName, {detail: detailType});
+        this.dispatchEvent(customEvent);
+    }
 
 
-    //#region Gameplay Actions
+    //#region Gameplay Events
     sendHost? : ActionSender<DataPayload>;
-    _recieveHost? : ActionReceiver<DataPayload>;
-
     sendPlayers? : ActionSender<DataPayload>;
-    _recievePlayers? : ActionReceiver<DataPayload>;
-
     sendTopics? : ActionSender<DataPayload>;
-    _recieveTopics? : ActionReceiver<DataPayload>;
-
     sendMessages? : ActionSender<DataPayload>;
-    _recieveMessages? : ActionReceiver<DataPayload>;
-
     sendJudging? : ActionSender<DataPayload>;
-    _recieveJudging? : ActionReceiver<DataPayload>;
-
     sendJudgement? : ActionSender<DataPayload>;
-    _recieveJudgment? : ActionReceiver<DataPayload>;
     //#endregion
-
-    recieveHost? : (hostId : UUID) => void;
-    recievePlayers? : (players : Player[], fromHost : boolean) => void;
-    recieveTopics? : (topics : Topic[]) => void;
-    recieveMessages? : (messages : Message[]) => void;
-    recieveJudging? : (topicUUID : UUID) => void;
-    recieveJudgment? : (messageUUID : UUID) => void;
 
 }
