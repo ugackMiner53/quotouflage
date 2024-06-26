@@ -1,7 +1,8 @@
 import { get, writable, type Writable } from "svelte/store";
 import TrysteroManager from "./networking/TrysteroManager";
 import { type UUID, type Message, type Player, type Topic } from "./Types";
-import { getRandomEmoji } from "./Utility";
+import { getRandomEmoji, getRandomTopic } from "./Utility";
+import { goto } from "$app/navigation";
 
 export default class GameManager {
     networkManager : TrysteroManager;
@@ -56,6 +57,40 @@ export default class GameManager {
         })
     }
 
+    startGame() {
+        if (this.hosting) {
+            const topics : Topic[] = [];
+
+            const players = get(this.players);
+            players.sort((a, b) => {
+                return a > b ? 1 : -1;
+            })
+
+            // Sattolo's Algorithm to cycle elements so that no topic is judged by the person it's about
+            const topicJudges = players.map(player => player.uuid);
+            for (let i=topicJudges.length-1; i>0; i--) {
+                const randomIndex = Math.floor(Math.random()*(i-1));
+                const tmp = topicJudges[randomIndex];
+                topicJudges[randomIndex] = topicJudges[i];
+                topicJudges[i] = tmp;
+            }
+
+
+            Promise.all(get(this.players).map(async (player, index) => {
+                topics.push({
+                    uuid: <UUID>crypto.randomUUID(),
+                    about: player.uuid,
+                    judge: topicJudges[index],
+                    topic: await getRandomTopic(),
+                });
+            })).then(() => {
+                console.log(topics)
+                this.networkManager.sendTopics!(topics);
+                this.recieveTopics(topics);
+            })
+        }
+    }
+
     createMethods() {
         this.networkManager.addEventListener("join", () => {this.playerJoined()});
 
@@ -80,12 +115,14 @@ export default class GameManager {
         })
     }
 
+    sendMessages(messages : Message[]) {
+        this.messages = this.messages.concat(messages);
+        this.networkManager.sendMessages!(messages);
+    }
+
     //#region Network Events
 
     playerJoined() {
-        console.log("SECOND PEER JOIN OMG OMG ");
-        console.log(`WTF im hosting: ${this.hosting}`)
-        console.log(this);
         if (this.hosting) {
             console.log("IM HOSTING, the UUID " + this.self.uuid + " IS GOING OUT");
             this.networkManager.sendHost!(this.self.uuid);
@@ -94,12 +131,12 @@ export default class GameManager {
 
     playerLeft() {
         if (this.hosting) {
+            // See TrysteroManager for the issue with this
             this.networkManager.sendPlayers!(get(this.players));
         }
     }
 
     recievePlayers(players : Player[], fromHost : boolean) {
-        console.log("I GOT PLAYERS");
         if (fromHost) {
             this.players.set(players);
         } else if (this.hosting && !fromHost && players.length == 1) {
@@ -115,14 +152,16 @@ export default class GameManager {
 
     recieveTopics(topics : Topic[]) {
         this.topics = topics;
+        goto("/game");
     }
 
     recieveMessages(messages : Message[]) {
+        console.log("Recieved Messages!");
         this.messages = this.messages.concat(messages);
     }
 
-    recieveJudging(judgeId : UUID) {
-        console.log("Not implemented " + judgeId);
+    recieveJudging(topicId : UUID) {
+        console.log("Not implemented " + topicId);
     }
 
     recieveJudgement(messageId : UUID) {

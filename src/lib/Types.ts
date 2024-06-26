@@ -11,6 +11,7 @@ export type Player = {
 export type Topic = {
     uuid : UUID;
     about : UUID;
+    judge : UUID;
     topic : string;
 }
 

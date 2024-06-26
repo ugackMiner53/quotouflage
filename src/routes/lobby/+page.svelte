@@ -13,7 +13,7 @@
 
 <h1 class="gamecode">{gameManager.gameCode}</h1>
 {#if gameManager.hosting}
-    <button class="start">GO!</button>
+    <button class="start" on:click={gameManager.startGame.bind(gameManager)}>GO!</button>
 {/if}
 
 <section>
