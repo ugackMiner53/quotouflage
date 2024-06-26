@@ -145,8 +145,7 @@ export default class GameManager extends EventTarget {
 
     playerJoined() {
         if (this.hosting) {
-            console.log("IM HOSTING, the UUID " + this.self.uuid + " IS GOING OUT");
-            this.networkManager.sendHost!(this.self.uuid);
+            console.log("Someone joined, I'm leaving the NetworkManager to take care of that");
         }
     }
 

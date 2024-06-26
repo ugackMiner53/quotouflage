@@ -3,6 +3,7 @@ import { joinRoom } from "trystero/torrent";
 import type NetworkManager from "./NetworkManager";
 import { type UUID, type Message, type Player, type Topic } from "$lib/Types";
 import { PUBLIC_PIN_LENGTH } from "$env/static/public";
+import { gameManager } from "$lib/Static";
 
 const APP_ID = "quotouflage-debug";
 
@@ -49,6 +50,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         // Add events for peer join/leave
         this.roomConnection?.onPeerJoin(() => {
             console.log("Intermediate intercept stage one");
+            this.sendHost!(gameManager.self.uuid);
             this.dispatchEvent(new Event("join"));
         });
 
@@ -102,11 +104,18 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
 
 
     //#region Gameplay Events
+
     sendHost? : ActionSender<DataPayload>;
+    
+    //@ts-expect-error Trystero needs these functions to be ActionSenders, which is trystero specific and cannot be encapsulated in NetworkManager
     sendPlayers? : ActionSender<DataPayload>;
+    //@ts-expect-error See above
     sendTopics? : ActionSender<DataPayload>;
+    //@ts-expect-error See above
     sendMessages? : ActionSender<DataPayload>;
+    //@ts-expect-error See above
     sendJudging? : ActionSender<DataPayload>;
+    //@ts-expect-error See above
     sendGuess? : ActionSender<DataPayload>;
     //#endregion
 
