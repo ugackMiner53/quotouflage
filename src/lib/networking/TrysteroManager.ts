@@ -38,13 +38,13 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         if (!this.roomConnection) return;
 
         // Create actions
-        let recieveHost : ActionReceiver<DataPayload>, recievePlayers : ActionReceiver<DataPayload>, recieveTopics : ActionReceiver<DataPayload>, recieveMessages : ActionReceiver<DataPayload>, recieveJudging : ActionReceiver<DataPayload>, recieveJudgment : ActionReceiver<DataPayload>;
+        let recieveHost : ActionReceiver<DataPayload>, recievePlayers : ActionReceiver<DataPayload>, recieveTopics : ActionReceiver<DataPayload>, recieveMessages : ActionReceiver<DataPayload>, recieveJudging : ActionReceiver<DataPayload>, recieveGuess : ActionReceiver<DataPayload>;
         [this.sendHost, recieveHost] = this.roomConnection.makeAction("host");  
         [this.sendPlayers, recievePlayers] = this.roomConnection.makeAction("players");
         [this.sendTopics, recieveTopics] = this.roomConnection.makeAction("topics");
         [this.sendMessages, recieveMessages] = this.roomConnection.makeAction("messages");
         [this.sendJudging, recieveJudging] = this.roomConnection.makeAction("judging");
-        [this.sendJudgement, recieveJudgment] = this.roomConnection.makeAction("judgement");  
+        [this.sendGuess, recieveGuess] = this.roomConnection.makeAction("guess");  
 
         // Add events for peer join/leave
         this.roomConnection?.onPeerJoin(() => {
@@ -89,8 +89,8 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
             }
         });
 
-        recieveJudgment(data => {
-            this.createAndDispatchEvent("judgment", <UUID>data);
+        recieveGuess(data => {
+            this.createAndDispatchEvent("guess", <UUID>data);
         });
     }
 
@@ -107,7 +107,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
     sendTopics? : ActionSender<DataPayload>;
     sendMessages? : ActionSender<DataPayload>;
     sendJudging? : ActionSender<DataPayload>;
-    sendJudgement? : ActionSender<DataPayload>;
+    sendGuess? : ActionSender<DataPayload>;
     //#endregion
 
 }

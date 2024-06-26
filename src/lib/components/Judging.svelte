@@ -19,7 +19,7 @@
 
     function guess(guessedPlayerId : UUID) {
         console.log("YOU GUESSED " + (guessedPlayerId === topic.about))
-        gameManager.sendJudgement(guessedPlayerId);
+        gameManager.sendGuess(guessedPlayerId);
     }
 </script>
 

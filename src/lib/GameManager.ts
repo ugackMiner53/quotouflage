@@ -120,8 +120,8 @@ export default class GameManager extends EventTarget {
             this.recieveJudging(event.detail!);
         })
 
-        this.networkManager.addEventListener("judgement", (event : CustomEventInit<UUID>) => {
-            this.recieveJudgement(event.detail!);
+        this.networkManager.addEventListener("guess", (event : CustomEventInit<UUID>) => {
+            this.recieveGuess(event.detail!);
         })
     }
 
@@ -130,9 +130,9 @@ export default class GameManager extends EventTarget {
         this.networkManager.sendMessages!(messages);
     }
 
-    sendJudgement(guessedPlayerId : UUID) {
+    sendGuess(guessedPlayerId : UUID) {
         console.log("Sending Guess!");
-        this.networkManager.sendJudgement!(guessedPlayerId);
+        this.networkManager.sendGuess!(guessedPlayerId);
     }
 
     //#region Network Events
@@ -185,9 +185,9 @@ export default class GameManager extends EventTarget {
         this.dispatchEvent(new CustomEvent("judging", {detail: <UUID>topicId}));
     }
 
-    recieveJudgement(guessedPlayerId : UUID) {
-        console.log("Passing on the judgement " + guessedPlayerId);
-        this.dispatchEvent(new CustomEvent("judgement", {detail: <UUID>guessedPlayerId}));
+    recieveGuess(guessedPlayerId : UUID) {
+        console.log("Passing on the guess " + guessedPlayerId);
+        this.dispatchEvent(new CustomEvent("guess", {detail: <UUID>guessedPlayerId}));
     }
 
     //#endregion

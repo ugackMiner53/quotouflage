@@ -56,6 +56,12 @@
         currentTopic = gameManager.uuidToTopic(event.detail!) ?? null;
     })
 
+    gameManager.addEventListener("guess", (event : CustomEventInit<UUID>) => {
+        console.log("Recieved guess of " + gameManager.uuidToPlayer(event.detail!)?.name)
+        // This shows the scorecard
+        // calculate changed scores in GameManager before this
+        currentTopic = null;
+    })
 
 
     //#endregion
