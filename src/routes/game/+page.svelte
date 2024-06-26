@@ -1,7 +1,6 @@
 <script lang="ts">
     import { gameManager } from "$lib/Static";
     import type { Message, Topic } from "$lib/Types";
-    import { getRandomTopic } from "$lib/Utility";
     import Writing from "$lib/components/Writing.svelte";
 
 

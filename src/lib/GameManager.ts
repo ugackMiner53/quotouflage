@@ -31,6 +31,12 @@ export default class GameManager {
         this.self = newSelf;
     }
 
+    uuidToPlayer(uuid: UUID) : Player|undefined {
+        const players = get(this.players);
+        const match = players.find(player => {return player.uuid === uuid});
+        return match;
+    }
+
     createGame() {
         this.createMethods();
 
@@ -120,6 +126,10 @@ export default class GameManager {
         this.networkManager.sendMessages!(messages);
     }
 
+    sendJudgement(guessedPlayerId : UUID) {
+        this.networkManager.sendJudgement!(guessedPlayerId);
+    }
+
     //#region Network Events
 
     playerJoined() {
@@ -132,7 +142,8 @@ export default class GameManager {
     playerLeft() {
         if (this.hosting) {
             // See TrysteroManager for the issue with this
-            this.networkManager.sendPlayers!(get(this.players));
+            console.error("Player left and I don't know what to do!");
+            // this.networkManager.sendPlayers!(get(this.players));
         }
     }
 
@@ -164,8 +175,8 @@ export default class GameManager {
         console.log("Not implemented " + topicId);
     }
 
-    recieveJudgement(messageId : UUID) {
-        console.log("Not implemented " + messageId);
+    recieveJudgement(guessedPlayerId : UUID) {
+        console.log("Not implemented " + guessedPlayerId);
     }
 
     //#endregion

@@ -12,7 +12,7 @@
 </script>
 
 
-<div class="question">
+<div class="prompt">
     {#if about}
         <h1>Write a sentence that <span style="white-space: nowrap;">{about}</span> would write about {topic}</h1>
     {:else if exampleMessage}
@@ -21,9 +21,6 @@
     {:else}
         <h1>Write a sentence about {topic}</h1>
     {/if}
-    
-    
-        <!-- <h1></h1> -->
 </div>
 
 <form class="answer" on:submit={(event) => {
@@ -36,7 +33,7 @@
 </form>
 
 <style>
-    .question {
+    .prompt {
         text-align: center;
         font-size: 2vmax;
     }
