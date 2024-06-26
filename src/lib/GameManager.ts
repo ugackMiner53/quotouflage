@@ -24,6 +24,7 @@ export default class GameManager extends EventTarget {
             uuid: <UUID>crypto.randomUUID(),
             name: name.toUpperCase(),
             emoji: getRandomEmoji(),
+            score: 0
         }
         this.players.set([this.self])
     }
@@ -131,8 +132,13 @@ export default class GameManager extends EventTarget {
     }
 
     sendGuess(guessedPlayerId : UUID) {
-        console.log("Sending Guess!");
+        this.recieveGuess(guessedPlayerId);
         this.networkManager.sendGuess!(guessedPlayerId);
+    }
+
+    sendJudging(topicId : UUID) {
+        this.recieveJudging(topicId);
+        this.networkManager.sendJudging!(topicId);
     }
 
     //#region Network Events
@@ -175,8 +181,7 @@ export default class GameManager extends EventTarget {
         console.log("Recieved Messages!");
         this.messages = this.messages.concat(messages);
         if (this.hosting && this.messages.length >= this.topics.length * (get(this.players).length-1)) {
-            this.networkManager.sendJudging!(this.topics[0].uuid);
-            this.recieveJudging(this.topics[0].uuid);
+            this.sendJudging(this.topics[0].uuid)
         }
     }
 

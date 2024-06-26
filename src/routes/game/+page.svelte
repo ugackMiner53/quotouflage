@@ -12,13 +12,13 @@
 
 
     let writing = true;
+    let currentTopicIndex = -1;
     let currentTopic : Topic|null; getNextTopic(); // Initialize outside of definition b/c nextTopic does not return
 
 
     //#region Writing
     const personalMessages : Message[] = [];
     
-    let currentTopicIndex = -1;
 
     function getNextTopic() {
         currentTopicIndex++;
@@ -52,14 +52,31 @@
 
     gameManager.addEventListener("judging", (event : CustomEventInit<UUID>) => {
         console.log("Judging event bubbled up to game +page.svelte!");
+        if (writing) {
+            currentTopicIndex = 1;
+        } else {
+            currentTopicIndex++;
+        }
         writing = false;
         currentTopic = gameManager.uuidToTopic(event.detail!) ?? null;
     })
 
     gameManager.addEventListener("guess", (event : CustomEventInit<UUID>) => {
         console.log("Recieved guess of " + gameManager.uuidToPlayer(event.detail!)?.name)
+        if (currentTopic == null) return;
+        
+        const guessedPlayer = gameManager.uuidToPlayer(event.detail!);
+        
+        if (guessedPlayer) guessedPlayer.score++;
+
+        if (currentTopic?.about === guessedPlayer?.uuid) {
+            const judgePlayer = gameManager.uuidToPlayer(currentTopic.judge);
+            if (judgePlayer) judgePlayer.score++;
+        }
+
+        // AI Clause here in the future
+
         // This shows the scorecard
-        // calculate changed scores in GameManager before this
         currentTopic = null;
     })
 
@@ -84,7 +101,14 @@
         {#if currentTopic}
             <Judging topic={currentTopic} />
         {:else}
-            <Scorecard />
+            <Scorecard on:continue={() => {
+                if (currentTopicIndex >= gameManager.topics.length) {
+                    // End game here
+                } else {
+                    currentTopic = gameManager.topics[currentTopicIndex]; // This gets overwritten, but it saves a tmp var!
+                    gameManager.sendJudging(currentTopic.uuid);
+                }
+            }} />
         {/if}
     {/if}
 </div>

@@ -86,6 +86,7 @@
                 uuid: <UUID>crypto.randomUUID(),
                 name,
                 emoji: getRandomEmoji(),
+                score: 0
             })
         }
     }

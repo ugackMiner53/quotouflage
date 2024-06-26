@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { gameManager } from "$lib/Static";
     import type { Player } from "$lib/Types";
     import { createEventDispatcher } from "svelte";
 
@@ -14,7 +15,7 @@
 
 
 <div class="prompt">
-    {#if about}
+    {#if about && about.uuid !== gameManager.self.uuid}
         <h1>Write a sentence that <span style="white-space: nowrap;">{about.emoji} {about.name}</span> would write about {topic}</h1>
     {:else if exampleMessage}
         <h1>Write a sentence about {topic} similar to</h1>
