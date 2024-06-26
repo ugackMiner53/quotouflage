@@ -96,7 +96,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
 
     // Utility function for creating & sending CustomEvent(s)
     createAndDispatchEvent<Type>(eventName : string, detailType : Type) {
-        const customEvent : CustomEvent<Type> = new CustomEvent(eventName, {detail: detailType});
+        const customEvent : CustomEvent<Type> = new CustomEvent(eventName, {detail: detailType, bubbles: true});
         this.dispatchEvent(customEvent);
     }
 

@@ -1,9 +1,10 @@
 <script lang="ts">
+    import type { Player } from "$lib/Types";
     import { createEventDispatcher } from "svelte";
 
     export let topic : string;
 
-    export let about : string|undefined;
+    export let about : Player|undefined;
     export let exampleMessage : string|undefined;
 
     let answer = "";
@@ -14,7 +15,7 @@
 
 <div class="prompt">
     {#if about}
-        <h1>Write a sentence that <span style="white-space: nowrap;">{about}</span> would write about {topic}</h1>
+        <h1>Write a sentence that <span style="white-space: nowrap;">{about.emoji} {about.name}</span> would write about {topic}</h1>
     {:else if exampleMessage}
         <h1>Write a sentence about {topic} similar to</h1>
         <h2>"{exampleMessage}"</h2>

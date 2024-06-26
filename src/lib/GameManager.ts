@@ -4,7 +4,7 @@ import { type UUID, type Message, type Player, type Topic } from "./Types";
 import { getRandomEmoji, getRandomTopic } from "./Utility";
 import { goto } from "$app/navigation";
 
-export default class GameManager {
+export default class GameManager extends EventTarget {
     networkManager : TrysteroManager;
     gameCode? : string;
     hostId? : UUID;
@@ -18,6 +18,7 @@ export default class GameManager {
 
 
     constructor(name : string) {
+        super();
         this.networkManager = new TrysteroManager();
         this.self = {
             uuid: <UUID>crypto.randomUUID(),
@@ -33,8 +34,11 @@ export default class GameManager {
 
     uuidToPlayer(uuid: UUID) : Player|undefined {
         const players = get(this.players);
-        const match = players.find(player => {return player.uuid === uuid});
-        return match;
+        return players.find(player => {return player.uuid === uuid});
+    }
+
+    uuidToTopic(uuid : UUID) : Topic|undefined {
+        return this.topics.find(topic => {return topic.uuid === uuid});
     }
 
     createGame() {
@@ -122,11 +126,12 @@ export default class GameManager {
     }
 
     sendMessages(messages : Message[]) {
-        this.messages = this.messages.concat(messages);
+        this.recieveMessages(messages);
         this.networkManager.sendMessages!(messages);
     }
 
     sendJudgement(guessedPlayerId : UUID) {
+        console.log("Sending Guess!");
         this.networkManager.sendJudgement!(guessedPlayerId);
     }
 
@@ -169,14 +174,20 @@ export default class GameManager {
     recieveMessages(messages : Message[]) {
         console.log("Recieved Messages!");
         this.messages = this.messages.concat(messages);
+        if (this.hosting && this.messages.length >= this.topics.length * (get(this.players).length-1)) {
+            this.networkManager.sendJudging!(this.topics[0].uuid);
+            this.recieveJudging(this.topics[0].uuid);
+        }
     }
 
     recieveJudging(topicId : UUID) {
-        console.log("Not implemented " + topicId);
+        console.log("Passing on the judging " + topicId);
+        this.dispatchEvent(new CustomEvent("judging", {detail: <UUID>topicId}));
     }
 
     recieveJudgement(guessedPlayerId : UUID) {
-        console.log("Not implemented " + guessedPlayerId);
+        console.log("Passing on the judgement " + guessedPlayerId);
+        this.dispatchEvent(new CustomEvent("judgement", {detail: <UUID>guessedPlayerId}));
     }
 
     //#endregion
