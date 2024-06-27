@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { PUBLIC_NETWORK_MODE } from "$env/static/public";
+    import { PUBLIC_ADAPTER } from "$env/static/public";
     import { createEventDispatcher } from "svelte";
     import Popup from "./Popup.svelte";
 
@@ -19,7 +19,7 @@
         <div /><div /><div /><div /><div /><div /><div /><div /><div /><div /><div /><div />
     </div>
 
-    {#if PUBLIC_NETWORK_MODE === "trystero"}
+    {#if PUBLIC_ADAPTER === "trystero"}
         {#if connectedPeers > 0}
             <p>Currently connected to <b>{connectedPeers}</b> other players and waiting for a host!</p>
         {:else}
@@ -31,7 +31,7 @@
             For better connection times, try hosting Quotouflage yourself! 
             Instructions are on the <a href="https://github.com/ugackMiner53/quotouflage" target="_blank">Github</a>!
         </p>
-    {:else if PUBLIC_NETWORK_MODE === "websocket"}
+    {:else if PUBLIC_ADAPTER === "websocket"}
         <p>Currently connecting to the server...</p>
 
         <p>
@@ -40,7 +40,7 @@
         </p>
     {:else}
         <p>
-            You're connecting using {PUBLIC_NETWORK_MODE}, which is a custom configuration.
+            You're connecting using {PUBLIC_ADAPTER}, which is a custom configuration.
             Help requests on our <a href="https://github.com/ugackMiner53/quotouflage" target="_blank">Github</a> for custom network adapters will be ignored!
         </p>
     {/if}

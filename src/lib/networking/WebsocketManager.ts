@@ -2,6 +2,7 @@ import type { UUID, Player, Topic, Message } from "$lib/Types";
 import type NetworkManager from "./NetworkManager";
 import { PUBLIC_WEBSOCKET_URL } from "$env/static/public";
 
+
 type WebsocketMessage = {
     type : MessageType,
     data : unknown
