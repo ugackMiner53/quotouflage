@@ -1,34 +1,70 @@
 import type { Plugin, ServerHook } from "vite";
 import dotenv from "dotenv";
-import { WebSocketServer } from "ws";
+import { WebSocket, WebSocketServer } from "ws";
 import type { Server as HttpServer } from "http";
+
+//#region Vite Plugin Setup & Server Creation
 
 dotenv.config();
 
+let isDevelopment = false;
 let websocketServer : WebSocketServer;
 
 export const configureServer : ServerHook = (server) => {
     if (!websocketServer) {
-        console.log("Configurlating the server!");;
+        console.log(`Configurating ${isDevelopment ? "development" : "production"} server on ${isDevelopment ? "port 4832" : "default URL"}!`);
+
         websocketServer = new WebSocketServer({
-            server: import.meta.env.PROD ? <HttpServer>server.httpServer : undefined,
-            port: import.meta.env.DEV ? 4832 : undefined
+            server: !isDevelopment ? <HttpServer>server.httpServer : undefined,
+            port: isDevelopment ? 4832 : undefined
         })
     }
 
-    websocketServer.on("connection", (socket) => {
-        socket.send("Hi hi hi!");
-        console.log("Someone joined!");
+    websocketServer.on("connection", handleSocket)
+}
 
-        socket.on("message", (msg) => {
-            console.log("I got " + msg);
-            socket.send("I recieved " + msg);
-        })
+export function websocketServerPlugin(_isDevelopment : boolean) : Plugin {
+    isDevelopment = _isDevelopment;
+
+    return {
+        name: "WebsocketServer",
+        configureServer
+    }
+}
+
+//#endregion
+
+// Gameplay Variables
+const rooms : Room[] = [];
+
+
+
+function handleSocket(socket : WebSocket) {
+    console.log("Someone joined!");
+
+    socket.on("message", (msg) => {
+        console.log("I got " + msg);
+        socket.send("I recieved " + msg);
     })
 }
 
-export const websocketServerPlugin : Plugin = {
-    name: "WebsocketServer",
-    configureServer,
+class Room {
+    host : WebSocket;
+    code : string;
+    players : WebSocket[] = [];
 
+    constructor(host : WebSocket, code : string) {
+        this.host = host;
+        this.code = code;
+    }
+
+    sendToAll(data : BufferLike) {
+        for (const player of this.players) {
+            player.send(data);
+        }
+    }
+
+    sendToOthers(data : unknown) {
+
+    }
 }
