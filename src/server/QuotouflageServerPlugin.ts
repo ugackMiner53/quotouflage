@@ -2,6 +2,7 @@ import type { Plugin, PreviewServerHook, ServerHook } from "vite";
 
 import dotenv from "dotenv";
 import QuotouflageServer from "./QuotouflageServer";
+
 dotenv.config();
 
 declare global {
@@ -12,6 +13,7 @@ declare global {
 let isDevelopment : boolean;
 
 const configureServer : ServerHook & PreviewServerHook = (server) => {
+    return;
     console.log("THE SERVER, THE SERVER!")
     console.log(global.quotouflageServer);
     if (!global.quotouflageServer) {
