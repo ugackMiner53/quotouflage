@@ -26,4 +26,4 @@ const config = async() => {
     }
 };
 
-export default config();
+export default await config();

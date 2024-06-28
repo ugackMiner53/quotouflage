@@ -5,12 +5,12 @@ import dotenv from "dotenv";
 dotenv.config()
 
 export default defineConfig(async ({mode}) => {
-    const isDevelopment = mode === "development";
+    console.log("IM DEFINING THE CONFIG I SWEAR " + process.env.PUBLIC_ADAPTER)
 
     return {
 	    plugins: [
             sveltekit(),
-            process.env.PUBLIC_ADAPTER === "websocket" ? (await import("./src/server/WebsocketServer")).websocketServerPlugin(isDevelopment) : undefined,
+            process.env.PUBLIC_ADAPTER === "websocket" ? (await import("./src/server/QuotouflageServerPlugin")).quotouflageServerPlugin(mode) : undefined,
         ]
     }
 });
