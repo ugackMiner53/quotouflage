@@ -12,6 +12,6 @@ export default interface NetworkManager {
     sendMessages(messages : Message[]) : void;
     sendJudging(topicId : UUID) : void;
     sendGuess(message : UUID) : void;
-
+    sendLobby() : void;
     //#endregion Gameplay Methods
 }

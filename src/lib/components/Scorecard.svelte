@@ -4,6 +4,8 @@
 
     const players = gameManager.players;
 
+    export let finalRound : boolean = false;
+
     $players = $players.sort((a, b) => {return b.score - a.score})
 
     const dispatch = createEventDispatcher();
@@ -11,23 +13,19 @@
 
 
 <div class="holder">
-    <h1 class="title">Scorecard</h1>
+    <h1 class="title">{finalRound ? "Final Scores" : "Scorecard"}</h1>
     
     <div class="scores">
-        <div class="top player">
-            <b class="name">Name</b>
-            <b class="score">Score</b>
-        </div>
+        <b class="name">Name</b>
+        <b class="score">Score</b>
         {#each $players as player}
-            <div class="player">
-                <p class="name">{player.emoji} {player.name}</p>
-                <p class="score">{player.score}</p>
-            </div>
+            <p class="name">{player.emoji} {player.name}</p>
+            <p class="score">{player.score}</p>
         {/each}
     </div>
     
     {#if gameManager.hosting}
-        <button on:click={() => {dispatch("continue")}} class="continue">Continue</button>
+        <button on:click={() => {dispatch("continue")}} class="continue">{finalRound ? "End Game" : "Continue"}</button>
     {/if}
 
 
@@ -52,26 +50,15 @@
 
     
     .scores {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr 0.5fr;
         gap: 3vh;
         border: 3px solid black;
         overflow-y: scroll;
+        padding-top: 3vh;
         width: 70vw;
         height: 70vh;
         text-align: center;
-    }
-
-    .top {
-        margin-top: 3vh;
-        padding-bottom: 3vh;
-        border-bottom: 3px dashed black;
-    }
-
-    .player {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-around;
     }
 
     .continue {

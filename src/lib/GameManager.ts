@@ -28,7 +28,7 @@ export default class GameManager extends EventTarget {
             emoji: getRandomEmoji(),
             score: 0
         }
-        this.players.set([this.self])
+        this.players.set([this.self]);
     }
 
     updateSelf(newSelf : Player) {
@@ -126,6 +126,10 @@ export default class GameManager extends EventTarget {
         this.networkManager.addEventListener("guess", (event : CustomEventInit<UUID>) => {
             this.recieveGuess(event.detail!);
         })
+
+        this.networkManager.addEventListener("lobby", () => {
+            this.recieveLobby();
+        })
     }
 
     sendMessages(messages : Message[]) {
@@ -143,6 +147,12 @@ export default class GameManager extends EventTarget {
         this.networkManager.sendJudging!(topicId);
     }
 
+    sendLobby() {
+        if (this.hosting) {
+            this.recieveLobby();
+            this.networkManager.sendLobby!(null);
+        }
+    }
     //#region Network Events
 
     playerJoined() {
@@ -175,6 +185,11 @@ export default class GameManager extends EventTarget {
 
     recieveTopics(topics : Topic[]) {
         this.topics = topics;
+        this.messages = [];
+        for (const player of get(this.players)) {
+            player.score = 0;
+        }
+        (<any>window).players = get(this.players);
         goto("/game");
     }
 
@@ -194,6 +209,10 @@ export default class GameManager extends EventTarget {
     recieveGuess(guessedPlayerId : UUID) {
         console.log("Passing on the guess " + guessedPlayerId);
         this.dispatchEvent(new CustomEvent("guess", {detail: <UUID>guessedPlayerId}));
+    }
+
+    recieveLobby() {
+        this.dispatchEvent(new Event("lobby"));
     }
 
     //#endregion

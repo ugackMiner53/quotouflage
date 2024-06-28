@@ -15,7 +15,14 @@
     let currentTopicIndex = -1;
     let currentTopic : Topic|null; getNextTopic(); // Initialize outside of definition b/c nextTopic does not return
 
+    console.log("Game Page just loaded, here are the defaults:");
+    console.log(writing);
+    console.log(currentTopicIndex);
+    try {
+        console.log(currentTopic ?? "null");
 
+    } catch {}
+    
     //#region Writing
     const personalMessages : Message[] = [];
     
@@ -50,7 +57,11 @@
 
     //#region Judging
 
-    gameManager.addEventListener("judging", (event : CustomEventInit<UUID>) => {
+    gameManager.addEventListener("judging", onJudging);
+    gameManager.addEventListener("guess", onGuess);
+    gameManager.addEventListener("lobby", onLobby);
+
+    function onJudging(event : CustomEventInit<UUID>) {
         console.log("Judging event bubbled up to game +page.svelte!");
         if (writing) {
             currentTopicIndex = 1;
@@ -59,9 +70,9 @@
         }
         writing = false;
         currentTopic = gameManager.uuidToTopic(event.detail!) ?? null;
-    })
+    }
 
-    gameManager.addEventListener("guess", (event : CustomEventInit<UUID>) => {
+    function onGuess(event : CustomEventInit<UUID>) {
         console.log("Recieved guess of " + gameManager.uuidToPlayer(event.detail!)?.name)
         if (currentTopic == null) return;
         
@@ -78,8 +89,18 @@
 
         // This shows the scorecard
         currentTopic = null;
-    })
+    }
 
+
+    function onLobby() {
+        console.log("Going back to lobby!");
+        // Without this, the event listeners get registered multiple times, leading to multiple score additions
+        // TODO: Not do it this way. If this gets missed for any reason (which it shouldn't), then we have an event listener mess!
+        gameManager.removeEventListener("judging", onJudging);
+        gameManager.removeEventListener("guess", onGuess);
+        gameManager.removeEventListener("lobby", onLobby);
+        goto("/lobby");
+    }
 
     //#endregion
 
@@ -101,9 +122,10 @@
         {#if currentTopic}
             <Judging topic={currentTopic} />
         {:else}
-            <Scorecard on:continue={() => {
+            <Scorecard finalRound={currentTopicIndex >= gameManager.topics.length} on:continue={() => {
                 if (currentTopicIndex >= gameManager.topics.length) {
                     // End game here
+                    gameManager.sendLobby();
                 } else {
                     currentTopic = gameManager.topics[currentTopicIndex]; // This gets overwritten, but it saves a tmp var!
                     gameManager.sendJudging(currentTopic.uuid);
@@ -130,6 +152,7 @@
         justify-content: center;
         align-items: center;
         flex-direction: column;
+        text-align: center;
         width: 100%;
         height: 100%;
     }
