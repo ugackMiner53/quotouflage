@@ -3,9 +3,11 @@ import TrysteroManager from "./networking/TrysteroManager";
 import { type UUID, type Message, type Player, type Topic } from "./Types";
 import { getRandomEmoji, getRandomTopic } from "./Utility";
 import { goto } from "$app/navigation";
+import { PUBLIC_ADAPTER } from "$env/static/public";
+import WebsocketManager from "./networking/WebsocketManager";
 
 export default class GameManager extends EventTarget {
-    networkManager : TrysteroManager;
+    networkManager : TrysteroManager|WebsocketManager;
     gameCode? : string;
     hostId? : UUID;
     hosting : boolean = false;
@@ -19,7 +21,7 @@ export default class GameManager extends EventTarget {
 
     constructor(name : string) {
         super();
-        this.networkManager = new TrysteroManager();
+        this.networkManager = PUBLIC_ADAPTER === "trystero" ? new TrysteroManager() : new WebsocketManager();
         this.self = {
             uuid: <UUID>crypto.randomUUID(),
             name: name.toUpperCase(),

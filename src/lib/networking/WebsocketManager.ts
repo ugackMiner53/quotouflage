@@ -1,7 +1,8 @@
 import type { UUID, Player, Topic, Message } from "$lib/Types";
 import type NetworkManager from "./NetworkManager";
-import { PUBLIC_WEBSOCKET_URL } from "$env/static/public";
+import { PUBLIC_PIN_LENGTH, PUBLIC_WEBSOCKET_URL } from "$env/static/public";
 import { MessageType, type WebsocketMessage } from "../../server/GameServer";
+import { gameManager } from "$lib/Static";
 
 export default class WebsocketManager extends EventTarget implements NetworkManager {
 
@@ -23,7 +24,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
 
     createNewRoom() : string {
         // Generate new room code
-        const code = crypto.randomUUID().substring(0, 7).toUpperCase()
+        const code = crypto.randomUUID().replaceAll("-", "").substring(0, parseInt(PUBLIC_PIN_LENGTH)).toUpperCase()
         this.connectToWebsocket().then(() => {
             this.sendWebsocketMessage({type: MessageType.JOIN, data: code});
         });
@@ -44,6 +45,10 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
         const message : WebsocketMessage = JSON.parse(messageEvent.data);
         switch (message.type) {
             case MessageType.JOIN: {
+                console.log("Hey, someone joined! Sending self!")
+                if (gameManager.hosting) {
+                    this.sendWebsocketMessage({type: MessageType.HOST, data: gameManager.self.uuid});
+                }
                 this.dispatchEvent(new Event("join"));
                 // this.createAndDispatchEvent("join", )
                 break;
@@ -51,6 +56,10 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
             case MessageType.LEAVE: {
                 this.dispatchEvent(new Event("leave"));
                 // this.createAndDispatchEvent("leave", )
+                break;
+            }
+            case MessageType.HOST: {
+                this.createAndDispatchEvent("host", <UUID>message.data);
                 break;
             }
             case MessageType.PLAYERS: {

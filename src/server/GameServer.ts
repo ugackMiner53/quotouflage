@@ -3,6 +3,7 @@ import { WebSocket, WebSocketServer } from "ws";
 export enum MessageType {
     JOIN,
     LEAVE,
+    HOST,
     PLAYERS,
     TOPICS,
     MESSAGES,
@@ -22,7 +23,7 @@ export default class GameServer {
 
     constructor(port: number) {
         this.websocketServer = new WebSocketServer({port})
-        this.websocketServer.on("connection", this.handleSocket);
+        this.websocketServer.on("connection", this.handleSocket.bind(this));
     }
 
     // Gameplay Variables
@@ -30,19 +31,17 @@ export default class GameServer {
     rooms = new Map<string, Room>();
 
     handleSocket(socket : GameSocket) {
-        console.log("Someone joined!");
-
         socket.on("message", (messageStr : string) => {
             const message : WebsocketMessage = JSON.parse(messageStr);
             switch (message.type) {
                 case MessageType.JOIN: {
-                    console.log("User JOIN");
                     const code = <string>message.data;
                     if (this.rooms.has(code)) {
                         const room = <Room>this.rooms.get(code)
                         room.connectPlayer(socket);
                         socket.room = room;
                     } else {
+                        // TODO If room does not exist & user is not creating room, then reject join and tell user
                         const room = new Room(socket, code);
                         this.rooms.set(code, room);
                         socket.room = room;
@@ -52,14 +51,18 @@ export default class GameServer {
                 case MessageType.LEAVE: {
                     break;
                 }
+                case MessageType.PLAYERS: {
+                    socket.room?.sendToOthers({type: MessageType.PLAYERS, data: {players: message.data, isHost: socket.room?.host === socket}}, socket)
+                    break;
+                }
 
-                case MessageType.PLAYERS: 
                 case MessageType.MESSAGES:
                 {
                     socket.room?.sendToOthers(message, socket);
                     break;
                 }
 
+                case MessageType.HOST:
                 case MessageType.TOPICS:
                 case MessageType.JUDGING:
                 {
@@ -69,7 +72,7 @@ export default class GameServer {
 
                 case MessageType.GUESS: {
                     // This is separated because only the selected judge should be allowed to make the authenticated send, but keeping track of who is judging is too hard of a task lol
-                    socket.room?.authenticatedSendToOthers(message, socket)
+                    socket.room?.authenticatedSendToOthers(message, socket, socket)
                     break;
                 }
 
@@ -119,6 +122,7 @@ class Room {
 
     connectPlayer(player : GameSocket) {
         this.players.push(player);
+        this.sendToOthers({type: MessageType.JOIN, data: null}, player)
     }
 
 

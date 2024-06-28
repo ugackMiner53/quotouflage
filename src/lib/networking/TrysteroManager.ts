@@ -49,8 +49,9 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
 
         // Add events for peer join/leave
         this.roomConnection?.onPeerJoin(() => {
-            console.log("Intermediate intercept stage one");
-            this.sendHost!(gameManager.self.uuid);
+            if (gameManager.hosting) {
+                this.sendHost!(gameManager.self.uuid);
+            }
             this.dispatchEvent(new Event("join"));
         });
 
