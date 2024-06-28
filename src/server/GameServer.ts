@@ -1,24 +1,16 @@
 import { WebSocket, WebSocketServer } from "ws";
-import type { Server as HttpServer } from "http";
-import type { ViteDevServer, PreviewServer } from "vite";
 
 
-export default class QuotouflageServer {
+export default class GameServer {
     websocketServer : WebSocketServer;
 
-    constructor(server : ViteDevServer|PreviewServer, isDevelopment : boolean) {
-        this.websocketServer = new WebSocketServer({
-            server: !isDevelopment ? <HttpServer>server.httpServer : undefined,
-            port: isDevelopment ? 4832 : undefined
-        })
-
+    constructor(port: number) {
+        this.websocketServer = new WebSocketServer({port})
         this.websocketServer.on("connection", this.handleSocket);
     }
 
     // Gameplay Variables
     rooms : Room[] = [];
-
-
 
     handleSocket(socket : WebSocket) {
         console.log("Someone joined!");
@@ -26,6 +18,13 @@ export default class QuotouflageServer {
         socket.on("message", (msg) => {
             console.log("I got " + msg);
             socket.send("I recieved " + msg);
+        })
+    }
+
+    reset() {
+        this.rooms = [];
+        this.websocketServer.clients.forEach(socket => {
+            socket.close();
         })
     }
 }

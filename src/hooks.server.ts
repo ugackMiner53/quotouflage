@@ -1,32 +1,23 @@
 import { building } from '$app/environment';
-// import type { Handle } from '@sveltejs/kit';
-import { WebSocketServer } from 'ws';
+import { PUBLIC_ADAPTER, PUBLIC_WEBSOCKET_PORT } from '$env/static/public';
+import GameServer from './server/GameServer';
 
-
-
-function createWebsocketServer() {
-    const wss = new WebSocketServer({
-        port: 2469
-    });
-    wss.on("connection", (socket) => {
-        console.log("connect")
-        socket.on("message", (data) => {
-            console.log("got  " + data)
-            socket.send("i got " + data);
-        })
-    })
+declare global {
+    // eslint-disable-next-line no-var
+    var gameServer : GameServer;
 }
 
-if (!building) {
-    createWebsocketServer();
+function createGameServer() {
+    global.gameServer = new GameServer(parseInt(PUBLIC_WEBSOCKET_PORT));
+}
+
+if (!building && PUBLIC_ADAPTER === "websocket" && !global.gameServer) {
+    createGameServer();
 
     // Without this, the app doesn't close. Don't ask me why.
     process.on('SIGINT', function() {
         process.exit(0);
     });
+} else if (global.gameServer) {
+    global.gameServer.reset();
 }
-
-// export const handle: Handle = async ({ event, resolve }) => {
-// 	const response = await resolve(event);	
-//     return response;
-// };
