@@ -1,22 +1,7 @@
 import type { UUID, Player, Topic, Message } from "$lib/Types";
 import type NetworkManager from "./NetworkManager";
 import { PUBLIC_WEBSOCKET_URL } from "$env/static/public";
-
-
-type WebsocketMessage = {
-    type : MessageType,
-    data : unknown
-}
-
-enum MessageType {
-    JOIN,
-    LEAVE,
-    PLAYERS,
-    TOPICS,
-    MESSAGES,
-    JUDGING,
-    JUDGEMENT
-}
+import { MessageType, type WebsocketMessage } from "../../server/GameServer";
 
 export default class WebsocketManager extends EventTarget implements NetworkManager {
 
@@ -40,17 +25,17 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
         // Generate new room code
         const code = crypto.randomUUID().substring(0, 7).toUpperCase()
         this.connectToWebsocket().then(() => {
-            this.sendWebsocketMessage({type: MessageType.JOIN, code});
+            this.sendWebsocketMessage({type: MessageType.JOIN, data: code});
         });
         return code;
     }
     
     async connectToRoom(code: string): Promise<void> {
         await this.connectToWebsocket();
-        this.sendWebsocketMessage({type: MessageType.JOIN, code});
+        this.sendWebsocketMessage({type: MessageType.JOIN, data: code});
     }
 
-    sendWebsocketMessage(object : unknown) {
+    sendWebsocketMessage(object : WebsocketMessage) {
         const string = JSON.stringify(object);
         this.websocket?.send(string);
     }
@@ -85,7 +70,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
                 this.createAndDispatchEvent("judging", <UUID>message.data)
                 break;
             }
-            case MessageType.JUDGEMENT: {
+            case MessageType.GUESS: {
                 this.createAndDispatchEvent("guess", <UUID>message.data)
                 break;
             }
@@ -103,18 +88,18 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
 
 
     sendPlayers(players: Player[]): void {
-        this.sendWebsocketMessage({type: MessageType.PLAYERS, players});
+        this.sendWebsocketMessage({type: MessageType.PLAYERS, data: players});
     }
     sendTopics(topics: Topic[]): void {
-        this.sendWebsocketMessage({type: MessageType.TOPICS, topics});
+        this.sendWebsocketMessage({type: MessageType.TOPICS, data: topics});
     }
     sendMessages(messages: Message[]): void {
-        this.sendWebsocketMessage({type: MessageType.MESSAGES, messages});
+        this.sendWebsocketMessage({type: MessageType.MESSAGES, data: messages});
     }
     sendJudging(topicId: UUID): void {
-        this.sendWebsocketMessage({type: MessageType.JUDGING, topicId});
+        this.sendWebsocketMessage({type: MessageType.JUDGING, data: topicId});
     }
     sendGuess(messageId: UUID): void {
-        this.sendWebsocketMessage({type: MessageType.JUDGEMENT, messageId})
+        this.sendWebsocketMessage({type: MessageType.GUESS, data: messageId})
     }
 }

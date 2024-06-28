@@ -1,5 +1,21 @@
 import { WebSocket, WebSocketServer } from "ws";
 
+export enum MessageType {
+    JOIN,
+    LEAVE,
+    PLAYERS,
+    TOPICS,
+    MESSAGES,
+    JUDGING,
+    GUESS
+}
+
+export type WebsocketMessage = {
+    type : MessageType,
+    data : unknown
+}
+
+type GameSocket = WebSocket & {room? : Room}
 
 export default class GameServer {
     websocketServer : WebSocketServer;
@@ -10,19 +26,63 @@ export default class GameServer {
     }
 
     // Gameplay Variables
-    rooms : Room[] = [];
+    // rooms : Room[] = [];
+    rooms = new Map<string, Room>();
 
-    handleSocket(socket : WebSocket) {
+    handleSocket(socket : GameSocket) {
         console.log("Someone joined!");
 
-        socket.on("message", (msg) => {
-            console.log("I got " + msg);
-            socket.send("I recieved " + msg);
+        socket.on("message", (messageStr : string) => {
+            const message : WebsocketMessage = JSON.parse(messageStr);
+            switch (message.type) {
+                case MessageType.JOIN: {
+                    console.log("User JOIN");
+                    const code = <string>message.data;
+                    if (this.rooms.has(code)) {
+                        const room = <Room>this.rooms.get(code)
+                        room.connectPlayer(socket);
+                        socket.room = room;
+                    } else {
+                        const room = new Room(socket, code);
+                        this.rooms.set(code, room);
+                        socket.room = room;
+                    }
+                    break;
+                }
+                case MessageType.LEAVE: {
+                    break;
+                }
+
+                case MessageType.PLAYERS: 
+                case MessageType.MESSAGES:
+                {
+                    socket.room?.sendToOthers(message, socket);
+                    break;
+                }
+
+                case MessageType.TOPICS:
+                case MessageType.JUDGING:
+                {
+                    socket.room?.authenticatedSendToOthers(message, socket);
+                    break;
+                }
+
+                case MessageType.GUESS: {
+                    // This is separated because only the selected judge should be allowed to make the authenticated send, but keeping track of who is judging is too hard of a task lol
+                    socket.room?.authenticatedSendToOthers(message, socket)
+                    break;
+                }
+
+
+                default: {
+                    console.warn(`Invalid type ${message.type}!`);
+                }
+            }
         })
     }
 
     reset() {
-        this.rooms = [];
+        this.rooms.clear();
         this.websocketServer.clients.forEach(socket => {
             socket.close();
         })
@@ -33,22 +93,36 @@ export default class GameServer {
 
 
 class Room {
-    host : WebSocket;
+    host : GameSocket;
     code : string;
-    players : WebSocket[] = [];
+    players : GameSocket[];
 
-    constructor(host : WebSocket, code : string) {
+    constructor(host : GameSocket, code : string) {
         this.host = host;
+        this.players = [host];
         this.code = code;
     }
 
-    sendToAll(data : any) {
-        for (const player of this.players) {
-            player.send(data);
+    authenticatedSendToOthers(data : WebsocketMessage, socket : GameSocket, expected : GameSocket = this.host) {
+        if (expected === socket) {
+            this.sendToOthers(data, socket);
         }
     }
 
-    sendToOthers(data : any) {
-
+    sendToOthers(data : WebsocketMessage, ignore : GameSocket) {
+        for (const player of this.players) {
+            if (player !== ignore) {
+                player.send(JSON.stringify(data))
+            }
+        }
     }
+
+    connectPlayer(player : GameSocket) {
+        this.players.push(player);
+    }
+
+
+
+
+
 }
