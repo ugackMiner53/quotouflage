@@ -1,6 +1,6 @@
 import type { UUID, Player, Topic, Message } from "$lib/Types";
 import type NetworkManager from "./NetworkManager";
-import { PUBLIC_PIN_LENGTH, PUBLIC_WEBSOCKET_URL } from "$env/static/public";
+import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 import { MessageType, type WebsocketMessage } from "../../server/GameServer";
 import { gameManager } from "$lib/Static";
 
@@ -9,7 +9,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
     websocket? : WebSocket;
     
     async connectToWebsocket() : Promise<void> {
-        let url = PUBLIC_WEBSOCKET_URL;
+        let url = (<any>await import("$env/static/public")).PUBLIC_WEBSOCKET_URL;
         if (!url) {
             url = `${location.protocol.includes("s") ? "wss" : "ws"}://${location.host}`
         }

@@ -22,8 +22,8 @@ type GameSocket = WebSocket & {room? : Room}
 export default class GameServer {
     websocketServer : WebSocketServer;
 
-    constructor(port: number) {
-        this.websocketServer = new WebSocketServer({port})
+    constructor(websocketServer : WebSocketServer) {
+        this.websocketServer = websocketServer;
         this.websocketServer.on("connection", this.handleSocket.bind(this));
     }
 

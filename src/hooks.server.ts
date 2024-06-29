@@ -1,5 +1,6 @@
-import { building } from '$app/environment';
-import { PUBLIC_ADAPTER, PUBLIC_WEBSOCKET_PORT } from '$env/static/public';
+import { building, dev } from '$app/environment';
+import { PUBLIC_ADAPTER } from '$env/static/public';
+import { WebSocketServer } from 'ws';
 import GameServer from './server/GameServer';
 
 declare global {
@@ -7,11 +8,12 @@ declare global {
     var gameServer : GameServer;
 }
 
-function createGameServer() {
-    global.gameServer = new GameServer(parseInt(PUBLIC_WEBSOCKET_PORT));
+async function createGameServer() {
+    const port = parseInt((<any>await import("$env/static/public")).PUBLIC_WEBSOCKET_PORT)
+    global.gameServer = new GameServer(new WebSocketServer({port}));
 }
 
-if (!building && PUBLIC_ADAPTER === "websocket" && !global.gameServer) {
+if (!building && dev && PUBLIC_ADAPTER === "websocket" && !global.gameServer) {
     createGameServer();
 
     // Without this, the app doesn't close. Don't ask me why.
