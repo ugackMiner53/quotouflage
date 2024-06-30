@@ -9,7 +9,7 @@ declare global {
 }
 
 async function createGameServer() {
-    const port = parseInt((<any>await import("$env/static/public")).PUBLIC_WEBSOCKET_PORT)
+    const port = parseInt((await import("$env/static/public")).PUBLIC_WEBSOCKET_PORT)
     global.gameServer = new GameServer(new WebSocketServer({port}));
 }
 

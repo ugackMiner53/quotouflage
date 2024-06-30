@@ -3,6 +3,7 @@
     import type { Topic, Message, UUID } from "$lib/Types";
 
     export let topic : Topic;
+    export let guessed = false;
 
     const judge = gameManager.uuidToPlayer(topic.judge);
     const about = gameManager.uuidToPlayer(topic.about);
@@ -28,13 +29,13 @@
         {#if topic.judge === gameManager.self.uuid}
             <h1>Find which sentence was written by {`${about?.emoji} ${about?.name}`} about {topic.topic}</h1>
         {:else}
-            <h1>{`${judge?.emoji} ${judge?.name}`} is looking for {`${about?.emoji} ${about?.name}`}</h1>
+            <h1>{`${judge?.emoji} ${judge?.name}`} is looking for {`${about?.emoji} ${about?.name}`} writing about {topic.topic}</h1>
         {/if}
     </div>
     
     <div class="guessbox">
         {#each getMessagesAboutTopic() as message}
-            <button on:click={() => {guess(message.author)}} disabled={!isJudging()} class="guess">{isJudging() ? "" : gameManager.uuidToPlayer(message.author)?.emoji ?? ""} {message.message}</button>
+            <button on:click={() => {guess(message.author)}} disabled={!isJudging() || guessed} class="guess">{(isJudging() || guessed) ? "" : gameManager.uuidToPlayer(message.author)?.emoji ?? ""} {message.message}</button>
         {/each}
     </div>
 </div>

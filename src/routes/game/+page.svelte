@@ -88,6 +88,8 @@
         // AI Clause here in the future
 
         // This shows the scorecard
+
+        // TODO: Change this to instead show the correct / incorrect answers, then do this on continue recieved
         currentTopic = null;
     }
 

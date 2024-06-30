@@ -62,7 +62,7 @@
 </script>
 
 <div class="fullscreen">
-    <Scorecard />
+    <Judging topic={{about: "ONE", judge: "ONE", topic: "MURDER", uuid: "89df79fds7"}} />
 </div>
 
 <style>

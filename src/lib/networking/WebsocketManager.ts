@@ -9,7 +9,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
     websocket? : WebSocket;
     
     async connectToWebsocket() : Promise<void> {
-        let url = (<any>await import("$env/static/public")).PUBLIC_WEBSOCKET_URL;
+        let url = (await import("$env/static/public")).PUBLIC_WEBSOCKET_URL;
         if (!url) {
             url = `${location.protocol.includes("s") ? "wss" : "ws"}://${location.host}`
         }
