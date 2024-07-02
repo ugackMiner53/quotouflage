@@ -5,6 +5,7 @@
     import Judging from "$lib/components/Judging.svelte";
     import Scorecard from "$lib/components/Scorecard.svelte";
     import Writing from "$lib/components/Writing.svelte";
+    import { writable } from "svelte/store";
 
     if (!gameManager) {
         goto("/join");
@@ -16,6 +17,9 @@
     let currentTopic : Topic|null; getNextTopic(); // Initialize outside of definition b/c nextTopic does not return
 
     let guessedUUID : UUID|null = null;
+
+    const players = gameManager.players;
+    const submittedPlayers = writable(new Set<UUID>())
     
     //#region Writing
     const personalMessages : Message[] = [];
@@ -32,8 +36,8 @@
                 console.log(`I believe I should be submitting for ${currentTopic.topic} because I am ${gameManager.self.uuid} which is not ${currentTopic.judge}`)
             }
         } else {
-            gameManager.sendMessages(personalMessages);
             currentTopic = null;
+            gameManager.sendMessages(personalMessages);
         }
     }
 
@@ -54,6 +58,7 @@
     gameManager.addEventListener("judging", onJudging);
     gameManager.addEventListener("guess", onGuess);
     gameManager.addEventListener("continue", onContinue);
+    gameManager.addEventListener("messageAuthor", onMessageAuthor)
 
     function onJudging(event : CustomEventInit<UUID>) {
         console.log("Judging event bubbled up to game +page.svelte!");
@@ -64,6 +69,7 @@
         }
         writing = false;
         guessedUUID = null;
+        $submittedPlayers.clear();
         currentTopic = gameManager.uuidToTopic(event.detail!) ?? null;
     }
 
@@ -84,6 +90,11 @@
         // AI Clause here in the future
     }
 
+    function onMessageAuthor(event : CustomEventInit<UUID>) {
+        $submittedPlayers.add(event.detail!);
+        $submittedPlayers = $submittedPlayers;
+    }
+
 
     function onContinue() {
         if (currentTopicIndex >= gameManager.topics.length && currentTopic == null) {
@@ -93,6 +104,7 @@
             gameManager.removeEventListener("judging", onJudging);
             gameManager.removeEventListener("guess", onGuess);
             gameManager.removeEventListener("continue", onContinue);
+            gameManager.removeEventListener("messageAuthor", onMessageAuthor);
             goto("/lobby");
         }
 
@@ -114,6 +126,11 @@
             <div class="waiting">
                 <h1>All of your answers have been submitted!</h1>
                 <h2>We're just waiting on everyone else now!</h2>
+                <div class="submittedPlayers">
+                    {#each $players as player}
+                        <p>{$submittedPlayers.has(player.uuid) ? "✅" : "❌"} {player.name}</p>
+                    {/each}
+                </div>
             </div>
         {/if}
     {:else}

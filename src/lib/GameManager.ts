@@ -196,6 +196,8 @@ export default class GameManager extends EventTarget {
     recieveMessages(messages : Message[]) {
         console.log("Recieved Messages!");
         this.messages = this.messages.concat(messages);
+        this.dispatchEvent(new CustomEvent("messageAuthor", {detail: <UUID>messages[0].author}))
+        
         if (this.hosting && this.messages.length >= this.topics.length * (get(this.players).length-1)) {
             this.sendJudging(this.topics[0].uuid)
         }
