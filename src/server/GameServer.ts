@@ -9,7 +9,7 @@ export enum MessageType {
     MESSAGES,
     JUDGING,
     GUESS,
-    LOBBY
+    CONTINUE
 }
 
 export type WebsocketMessage = {
@@ -66,7 +66,7 @@ export default class GameServer {
                 case MessageType.HOST:
                 case MessageType.TOPICS:
                 case MessageType.JUDGING:
-                case MessageType.LOBBY:
+                case MessageType.CONTINUE:
                 {
                     socket.room?.authenticatedSendToOthers(message, socket);
                     break;

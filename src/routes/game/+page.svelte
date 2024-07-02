@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { gameManager } from "$lib/Static";
-    import type { Message, Topic, UUID } from "$lib/Types";
+    import type { Message, Player, Topic, UUID } from "$lib/Types";
     import Judging from "$lib/components/Judging.svelte";
     import Scorecard from "$lib/components/Scorecard.svelte";
     import Writing from "$lib/components/Writing.svelte";
@@ -15,13 +15,7 @@
     let currentTopicIndex = -1;
     let currentTopic : Topic|null; getNextTopic(); // Initialize outside of definition b/c nextTopic does not return
 
-    console.log("Game Page just loaded, here are the defaults:");
-    console.log(writing);
-    console.log(currentTopicIndex);
-    try {
-        console.log(currentTopic ?? "null");
-
-    } catch {}
+    let guessedUUID : UUID|null = null;
     
     //#region Writing
     const personalMessages : Message[] = [];
@@ -59,7 +53,7 @@
 
     gameManager.addEventListener("judging", onJudging);
     gameManager.addEventListener("guess", onGuess);
-    gameManager.addEventListener("lobby", onLobby);
+    gameManager.addEventListener("continue", onContinue);
 
     function onJudging(event : CustomEventInit<UUID>) {
         console.log("Judging event bubbled up to game +page.svelte!");
@@ -69,6 +63,7 @@
             currentTopicIndex++;
         }
         writing = false;
+        guessedUUID = null;
         currentTopic = gameManager.uuidToTopic(event.detail!) ?? null;
     }
 
@@ -76,7 +71,8 @@
         console.log("Recieved guess of " + gameManager.uuidToPlayer(event.detail!)?.name)
         if (currentTopic == null) return;
         
-        const guessedPlayer = gameManager.uuidToPlayer(event.detail!);
+        guessedUUID = event.detail!;
+        const guessedPlayer = gameManager.uuidToPlayer(event.detail!) ?? null;
         
         if (guessedPlayer) guessedPlayer.score++;
 
@@ -86,22 +82,22 @@
         }
 
         // AI Clause here in the future
-
-        // This shows the scorecard
-
-        // TODO: Change this to instead show the correct / incorrect answers, then do this on continue recieved
-        currentTopic = null;
     }
 
 
-    function onLobby() {
-        console.log("Going back to lobby!");
-        // Without this, the event listeners get registered multiple times, leading to multiple score additions
-        // TODO: Not do it this way. If this gets missed for any reason (which it shouldn't), then we have an event listener mess!
-        gameManager.removeEventListener("judging", onJudging);
-        gameManager.removeEventListener("guess", onGuess);
-        gameManager.removeEventListener("lobby", onLobby);
-        goto("/lobby");
+    function onContinue() {
+        if (currentTopicIndex >= gameManager.topics.length && currentTopic == null) {
+            console.log("Going back to lobby!");
+            // Without this, the event listeners get registered multiple times, leading to multiple score additions
+            // TODO: Not do it this way. If this gets missed for any reason (which it shouldn't), then we have an event listener mess!
+            gameManager.removeEventListener("judging", onJudging);
+            gameManager.removeEventListener("guess", onGuess);
+            gameManager.removeEventListener("continue", onContinue);
+            goto("/lobby");
+        }
+
+        console.log("Recieved Continue, setting topic to null");
+        currentTopic = null
     }
 
     //#endregion
@@ -122,12 +118,12 @@
         {/if}
     {:else}
         {#if currentTopic}
-            <Judging topic={currentTopic} />
+            <Judging topic={currentTopic} guessedPlayer={guessedUUID} on:continue={() => {gameManager.sendContinue()}} />
         {:else}
             <Scorecard finalRound={currentTopicIndex >= gameManager.topics.length} on:continue={() => {
                 if (currentTopicIndex >= gameManager.topics.length) {
                     // End game here
-                    gameManager.sendLobby();
+                    gameManager.sendContinue();
                 } else {
                     currentTopic = gameManager.topics[currentTopicIndex]; // This gets overwritten, but it saves a tmp var!
                     gameManager.sendJudging(currentTopic.uuid);

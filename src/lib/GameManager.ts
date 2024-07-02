@@ -127,8 +127,8 @@ export default class GameManager extends EventTarget {
             this.recieveGuess(event.detail!);
         })
 
-        this.networkManager.addEventListener("lobby", () => {
-            this.recieveLobby();
+        this.networkManager.addEventListener("continue", () => {
+            this.recieveContinue();
         })
     }
 
@@ -147,10 +147,11 @@ export default class GameManager extends EventTarget {
         this.networkManager.sendJudging!(topicId);
     }
 
-    sendLobby() {
+    sendContinue() {
+        console.log("IM TRYING TO SEND CONTINUE")
         if (this.hosting) {
-            this.recieveLobby();
-            this.networkManager.sendLobby!(null);
+            this.recieveContinue();
+            this.networkManager.sendContinue!(null);
         }
     }
     //#region Network Events
@@ -189,7 +190,6 @@ export default class GameManager extends EventTarget {
         for (const player of get(this.players)) {
             player.score = 0;
         }
-        (<any>window).players = get(this.players);
         goto("/game");
     }
 
@@ -211,8 +211,9 @@ export default class GameManager extends EventTarget {
         this.dispatchEvent(new CustomEvent("guess", {detail: <UUID>guessedPlayerId}));
     }
 
-    recieveLobby() {
-        this.dispatchEvent(new Event("lobby"));
+    recieveContinue() {
+        console.log("Recieved continue in GM");
+        this.dispatchEvent(new Event("continue"));
     }
 
     //#endregion

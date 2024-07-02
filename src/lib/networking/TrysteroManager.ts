@@ -39,14 +39,14 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         if (!this.roomConnection) return;
 
         // Create actions
-        let recieveHost : ActionReceiver<DataPayload>, recievePlayers : ActionReceiver<DataPayload>, recieveTopics : ActionReceiver<DataPayload>, recieveMessages : ActionReceiver<DataPayload>, recieveJudging : ActionReceiver<DataPayload>, recieveGuess : ActionReceiver<DataPayload>, recieveLobby : ActionReceiver<DataPayload>;
+        let recieveHost : ActionReceiver<DataPayload>, recievePlayers : ActionReceiver<DataPayload>, recieveTopics : ActionReceiver<DataPayload>, recieveMessages : ActionReceiver<DataPayload>, recieveJudging : ActionReceiver<DataPayload>, recieveGuess : ActionReceiver<DataPayload>, recieveContinue : ActionReceiver<DataPayload>;
         [this.sendHost, recieveHost] = this.roomConnection.makeAction("host");  
         [this.sendPlayers, recievePlayers] = this.roomConnection.makeAction("players");
         [this.sendTopics, recieveTopics] = this.roomConnection.makeAction("topics");
         [this.sendMessages, recieveMessages] = this.roomConnection.makeAction("messages");
         [this.sendJudging, recieveJudging] = this.roomConnection.makeAction("judging");
         [this.sendGuess, recieveGuess] = this.roomConnection.makeAction("guess");  
-        [this.sendLobby, recieveLobby] = this.roomConnection.makeAction("lobby");
+        [this.sendContinue, recieveContinue] = this.roomConnection.makeAction("continue");
 
         // Add events for peer join/leave
         this.roomConnection?.onPeerJoin(() => {
@@ -97,9 +97,9 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
             this.createAndDispatchEvent("guess", <UUID>data);
         });
 
-        recieveLobby((data, peerId) => {
+        recieveContinue((data, peerId) => {
             if (peerId === this.hostPeerId) {
-                this.dispatchEvent(new Event("lobby"));
+                this.dispatchEvent(new Event("continue"));
             }
         })
     }
@@ -126,7 +126,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
     //@ts-expect-error See above
     sendGuess? : ActionSender<DataPayload>;
     //@ts-expect-error See above
-    sendLobby? : ActionSender<DataPayload>;
+    sendContinue? : ActionSender<DataPayload>;
     //#endregion
 
 }

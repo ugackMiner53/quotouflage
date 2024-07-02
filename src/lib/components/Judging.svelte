@@ -1,12 +1,16 @@
 <script lang="ts">
     import { gameManager } from "$lib/Static";
     import type { Topic, Message, UUID } from "$lib/Types";
+    import { createEventDispatcher } from "svelte";
 
+    
     export let topic : Topic;
-    export let guessed = false;
+    export let guessedPlayer : UUID|null = null;
 
     const judge = gameManager.uuidToPlayer(topic.judge);
     const about = gameManager.uuidToPlayer(topic.about);
+
+    const dispatch = createEventDispatcher();
 
     function getMessagesAboutTopic() : Message[] {
         return gameManager.messages.filter(message => {
@@ -35,9 +39,20 @@
     
     <div class="guessbox">
         {#each getMessagesAboutTopic() as message}
-            <button on:click={() => {guess(message.author)}} disabled={!isJudging() || guessed} class="guess">{(isJudging() || guessed) ? "" : gameManager.uuidToPlayer(message.author)?.emoji ?? ""} {message.message}</button>
+            <button 
+                on:click={() => {guess(message.author);}} 
+                disabled={!isJudging() || guessedPlayer != null} 
+                class={`option ${guessedPlayer == message.author ? "guess" : ""} ${guessedPlayer != null && (message.author == topic.about) ? "about" : ""}`}
+            >
+                    {(isJudging() && !guessedPlayer) ? "" : gameManager.uuidToPlayer(message.author)?.emoji ?? ""} {message.message}
+            </button>
         {/each}
     </div>
+
+    {#if gameManager.hosting && guessedPlayer}
+        <button on:click={() => {dispatch("continue"); console.log("fierst")}} class="continue">Continue</button>
+    {/if}
+
 </div>
 
 <style>
@@ -69,7 +84,7 @@
         margin-bottom: 3vh;
     }
 
-    .guess {
+    .option {
         width: 85%;
         background: none;
         cursor: pointer;
@@ -79,14 +94,38 @@
         transition: 0.3s;
     }
 
-    .guess:hover {
+    .option:hover {
         border: 3px solid black;
         background: lightgray;
     }
 
-    .guess:disabled {
+    .option:disabled {
         border: 3px dashed rgba(0, 0, 0, 0.5);
         background: lightgray;
         cursor: default;
+    }
+
+    .option.about {
+        border: 3px solid lime;
+    }
+
+    .option.guess:not(.about) {
+        border: 3px solid red;
+    }
+
+    .continue {
+        margin-bottom: 3vh;
+        font-size: 5vw;
+        background: none;
+        border: 3px dashed black;
+        padding: 2vw;
+        cursor: pointer;
+        transition: 0.3s;
+        border-radius: 12px;
+    }
+
+    .continue:hover {
+        border: 3px solid black;
+        background: lightgray;
     }
 </style>

@@ -83,8 +83,8 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
                 this.createAndDispatchEvent("guess", <UUID>message.data)
                 break;
             }
-            case MessageType.LOBBY: {
-                this.dispatchEvent(new Event("lobby"));
+            case MessageType.CONTINUE: {
+                this.dispatchEvent(new Event("continue"));
                 break;
             }
             default: {
@@ -115,7 +115,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
     sendGuess(messageId: UUID): void {
         this.sendWebsocketMessage({type: MessageType.GUESS, data: messageId})
     }
-    sendLobby(): void {
-        this.sendWebsocketMessage({type: MessageType.LOBBY, data: null});
+    sendContinue(): void {
+        this.sendWebsocketMessage({type: MessageType.CONTINUE, data: null});
     }
 }
