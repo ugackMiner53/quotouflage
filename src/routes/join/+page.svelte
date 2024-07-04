@@ -20,6 +20,8 @@
     let connecting = writable(false);
     let connectedPeers = writable(0);
 
+    let abortConnectionController : AbortController;
+
     function onPinClick() {
         if (pinCode.length < 0 || pinCode.length >= PIN_LENGTH) return;
 
@@ -36,7 +38,6 @@
             pinCode[elem] = target.value;
             onPinClick();
         }
-
         
         if (pinCode.length == PIN_LENGTH) {
             joinGame()
@@ -57,15 +58,16 @@
         if (!$name) return;
 
         updateManager($name);
-        connecting.set(true);
-        gameManager.joinGame(pinCode.join("").toUpperCase()).then(() => {
+        $connecting = true;
+        abortConnectionController = new AbortController();
+        gameManager.joinGame(pinCode.join("").toUpperCase(), abortConnectionController.signal).then(() => {
             console.log(`Joined ${pinCode.join("").toUpperCase()} correctly`)
             goto("/lobby");    
-            connecting.set(false);
+            $connecting = false;
         }).catch(() => {
             console.log(`Did not join ${pinCode.join("").toUpperCase()} correctly`)
             // TODO: Consider showing an error message here at some point
-            connecting.set(false);
+            $connecting = false;
         })
     }
 
@@ -105,6 +107,7 @@
             pinInputs.forEach(input => {
                 input.value = "";
             })
+            abortConnectionController.abort();
             $connecting = false;
         }} 
         connectedPeers={$connectedPeers} 

@@ -29,10 +29,12 @@ export default class GameManager extends EventTarget {
             score: 0
         }
         this.players.set([this.self]);
+        this.createMethods();
     }
 
     updateSelf(newSelf : Player) {
         this.self = newSelf;
+        this.players.set([this.self]);
     }
 
     uuidToPlayer(uuid: UUID) : Player|undefined {
@@ -45,27 +47,35 @@ export default class GameManager extends EventTarget {
     }
 
     createGame() {
-        this.createMethods();
-
         this.gameCode = this.networkManager.createNewRoom();
         this.hostId = this.self.uuid;
         this.hosting = true;
         this.self.emoji = "👑";
     } 
 
-    async joinGame(code : string) : Promise<void> {
+    async joinGame(code : string, signal : AbortSignal) : Promise<void> {
         this.gameCode = code;
-        this.createMethods();
         await this.networkManager.connectToRoom(code);
         
         // Wait to recieve Host before saying we're connected
-        return new Promise(resolve => {
-            this.networkManager.addEventListener("host", (event : CustomEventInit<UUID>) => {
+        return new Promise((resolve, reject) => {
+            if (signal.aborted) {
+                reject(signal.reason);
+            }
+
+            const recieveHost = (event : CustomEventInit<UUID>) => {
                 console.log("Recieved Host");
                 this.hostId = event.detail;
                 this.hosting = this.self.uuid === this.hostId;
                 this.networkManager.sendPlayers!(get(this.players));
                 resolve();
+            };
+
+            this.networkManager.addEventListener("host", recieveHost);
+
+            signal.addEventListener("abort", () => {
+                this.networkManager.removeEventListener("host", recieveHost);
+                reject(signal.reason);
             })
         })
     }
@@ -197,7 +207,7 @@ export default class GameManager extends EventTarget {
         console.log("Recieved Messages!");
         this.messages = this.messages.concat(messages);
         this.dispatchEvent(new CustomEvent("messageAuthor", {detail: <UUID>messages[0].author}))
-        
+
         if (this.hosting && this.messages.length >= this.topics.length * (get(this.players).length-1)) {
             this.sendJudging(this.topics[0].uuid)
         }

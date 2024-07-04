@@ -32,7 +32,9 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
     }
     
     async connectToRoom(code: string): Promise<void> {
-        await this.connectToWebsocket();
+        if (!this.websocket) {
+            await this.connectToWebsocket();
+        }
         this.sendWebsocketMessage({type: MessageType.JOIN, data: code});
     }
 
