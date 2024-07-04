@@ -23,6 +23,9 @@
         display: flex;
         justify-content: center;
         font-size: 10vw;
+        background: linear-gradient(to bottom right, black, transparent);
+        background-clip: text;
+        color: transparent;
     }
 
     .buttons {
@@ -39,7 +42,7 @@
         background: none;
         border-radius: 12px;
         border: dotted 3px black;
-        font-size: 0;
+        font-size: 2.5vw;
         opacity: 0.5;
         cursor: pointer;
         transition: 0.3s;

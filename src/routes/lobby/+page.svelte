@@ -13,7 +13,7 @@
 
 <h1 class="gamecode">{gameManager.gameCode}</h1>
 {#if gameManager.hosting}
-    <button class="start" on:click={gameManager.startGame.bind(gameManager)}>GO!</button>
+    <button disabled={$players.length < 3} class="start" on:click={gameManager.startGame.bind(gameManager)}>GO!</button>
 {/if}
 
 <section>
@@ -49,7 +49,12 @@
         border-radius: 12px;
     }
 
-    .start:hover {
+    .start:disabled {
+        cursor: not-allowed;
+        border: 3px dashed lightgray;
+    }
+
+    .start:hover:not(:disabled) {
         border: 3px solid black;
         background: lightgray;
     }

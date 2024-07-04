@@ -115,7 +115,7 @@
     />
 {/if}
 
-<button class="name" on:click={() => {$name = undefined}}>
+<button class="name" in:fade={{delay: 300}} out:fade={{delay:0, duration: 300}} on:click={() => {$name = undefined}}>
     <p>{$name}</p>
 </button>
 
