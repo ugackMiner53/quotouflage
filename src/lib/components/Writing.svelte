@@ -15,7 +15,7 @@
 
 
 <div class="prompt">
-    {#if about && about.uuid !== gameManager.self.uuid}
+    {#if about && about.networkId !== gameManager.self.networkId}
         <h1>Write a sentence that <span style="white-space: nowrap;">{about.emoji} {about.name}</span> would write about {topic}</h1>
     {:else if exampleMessage}
         <h1>Write a sentence about {topic} similar to</h1>

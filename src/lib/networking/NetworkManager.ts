@@ -1,4 +1,4 @@
-import { type UUID, type Player, type Topic, type Message } from "$lib/Types";
+import { type UUID, type Player, type Topic, type Message, type NetworkID } from "$lib/Types";
 
 export default interface NetworkManager {
     createNewRoom() : string;
@@ -11,7 +11,7 @@ export default interface NetworkManager {
     sendTopics(topics : Topic[]) : void;
     sendMessages(messages : Message[]) : void;
     sendJudging(topicId : UUID) : void;
-    sendGuess(message : UUID) : void;
+    sendGuess(message : NetworkID) : void;
     sendContinue() : void;
     //#endregion Gameplay Methods
 }

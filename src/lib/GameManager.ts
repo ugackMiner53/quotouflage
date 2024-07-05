@@ -1,6 +1,6 @@
 import { get, writable, type Writable } from "svelte/store";
 import TrysteroManager from "./networking/TrysteroManager";
-import { type UUID, type Message, type Player, type Topic } from "./Types";
+import { type UUID, type Message, type Player, type Topic, type NetworkID } from "./Types";
 import { getRandomEmoji, getRandomTopic } from "./Utility";
 import { goto } from "$app/navigation";
 import { PUBLIC_ADAPTER } from "$env/static/public";
@@ -9,7 +9,7 @@ import WebsocketManager from "./networking/WebsocketManager";
 export default class GameManager extends EventTarget {
     networkManager : TrysteroManager|WebsocketManager;
     gameCode? : string;
-    hostId? : UUID;
+    hostId? : NetworkID;
     hosting : boolean = false;
     self : Player;
 
@@ -23,7 +23,7 @@ export default class GameManager extends EventTarget {
         super();
         this.networkManager = PUBLIC_ADAPTER === "trystero" ? new TrysteroManager() : new WebsocketManager();
         this.self = {
-            uuid: <UUID>crypto.randomUUID(),
+            networkId: <NetworkID>"NO NETWORK ID INITIALIZED",
             name: name.toUpperCase(),
             emoji: getRandomEmoji(),
             score: 0
@@ -37,9 +37,9 @@ export default class GameManager extends EventTarget {
         this.players.set([this.self]);
     }
 
-    uuidToPlayer(uuid: UUID) : Player|undefined {
+    networkIdToPlayer(networkId: NetworkID) : Player|undefined {
         const players = get(this.players);
-        return players.find(player => {return player.uuid === uuid});
+        return players.find(player => {return player.networkId === networkId});
     }
 
     uuidToTopic(uuid : UUID) : Topic|undefined {
@@ -48,9 +48,16 @@ export default class GameManager extends EventTarget {
 
     createGame() {
         this.gameCode = this.networkManager.createNewRoom();
-        this.hostId = this.self.uuid;
         this.hosting = true;
         this.self.emoji = "👑";
+
+        const recieveGameDetails = (event : CustomEventInit<{self: NetworkID, host: NetworkID}>) => {
+            console.log("Recieved Self ID");
+            this.self.networkId = event.detail!.self;
+            this.hostId = this.self.networkId;
+        };
+
+        this.networkManager.addEventListener("details", recieveGameDetails);
     } 
 
     async joinGame(code : string, signal : AbortSignal) : Promise<void> {
@@ -63,18 +70,19 @@ export default class GameManager extends EventTarget {
                 reject(signal.reason);
             }
 
-            const recieveHost = (event : CustomEventInit<UUID>) => {
+            const recieveGameDetails = (event : CustomEventInit<{self: NetworkID, host: NetworkID}>) => {
                 console.log("Recieved Host");
-                this.hostId = event.detail;
-                this.hosting = this.self.uuid === this.hostId;
+                this.self.networkId = event.detail!.self;
+                this.hostId = event.detail!.host;
+                this.hosting = this.self.networkId === this.hostId;
                 this.networkManager.sendPlayers!(get(this.players));
                 resolve();
             };
 
-            this.networkManager.addEventListener("host", recieveHost);
+            this.networkManager.addEventListener("details", recieveGameDetails);
 
             signal.addEventListener("abort", () => {
-                this.networkManager.removeEventListener("host", recieveHost);
+                this.networkManager.removeEventListener("details", recieveGameDetails);
                 reject(signal.reason);
             })
         })
@@ -90,7 +98,7 @@ export default class GameManager extends EventTarget {
             })
 
             // Sattolo's Algorithm to cycle elements so that no topic is judged by the person it's about
-            const topicJudges = players.map(player => player.uuid);
+            const topicJudges = players.map(player => player.networkId);
             for (let i=topicJudges.length-1; i>0; i--) {
                 const randomIndex = Math.floor(Math.random()*(i-1));
                 const tmp = topicJudges[randomIndex];
@@ -102,7 +110,7 @@ export default class GameManager extends EventTarget {
             Promise.all(get(this.players).map(async (player, index) => {
                 topics.push({
                     uuid: <UUID>crypto.randomUUID(),
-                    about: player.uuid,
+                    about: player.networkId,
                     judge: topicJudges[index],
                     topic: await getRandomTopic(),
                 });
@@ -116,6 +124,10 @@ export default class GameManager extends EventTarget {
 
     createMethods() {
         this.networkManager.addEventListener("join", () => {this.playerJoined()});
+
+        this.networkManager.addEventListener("leave", (event : CustomEventInit<NetworkID>) => {
+            this.playerLeft(event.detail!);
+        });
 
         this.networkManager.addEventListener("players", (event : CustomEventInit<{players: Player[], isHost : boolean}>) => {
             this.recievePlayers(event.detail!.players, event.detail!.isHost);
@@ -133,7 +145,7 @@ export default class GameManager extends EventTarget {
             this.recieveJudging(event.detail!);
         })
 
-        this.networkManager.addEventListener("guess", (event : CustomEventInit<UUID>) => {
+        this.networkManager.addEventListener("guess", (event : CustomEventInit<NetworkID>) => {
             this.recieveGuess(event.detail!);
         })
 
@@ -147,7 +159,7 @@ export default class GameManager extends EventTarget {
         this.networkManager.sendMessages!(messages);
     }
 
-    sendGuess(guessedPlayerId : UUID) {
+    sendGuess(guessedPlayerId : NetworkID) {
         this.recieveGuess(guessedPlayerId);
         this.networkManager.sendGuess!(guessedPlayerId);
     }
@@ -172,12 +184,10 @@ export default class GameManager extends EventTarget {
         }
     }
 
-    playerLeft() {
-        if (this.hosting) {
-            // See TrysteroManager for the issue with this
-            console.error("Player left and I don't know what to do!");
-            // this.networkManager.sendPlayers!(get(this.players));
-        }
+    playerLeft(disconnectedPlayer : NetworkID) {
+        this.players.update((players) => {
+            return players.filter(player => player.networkId !== disconnectedPlayer);
+        });
     }
 
     recievePlayers(players : Player[], fromHost : boolean) {
@@ -206,7 +216,7 @@ export default class GameManager extends EventTarget {
     recieveMessages(messages : Message[]) {
         console.log("Recieved Messages!");
         this.messages = this.messages.concat(messages);
-        this.dispatchEvent(new CustomEvent("messageAuthor", {detail: <UUID>messages[0].author}))
+        this.dispatchEvent(new CustomEvent("messageAuthor", {detail: <NetworkID>messages[0].author}))
 
         if (this.hosting && this.messages.length >= this.topics.length * (get(this.players).length-1)) {
             this.sendJudging(this.topics[0].uuid)
@@ -218,9 +228,9 @@ export default class GameManager extends EventTarget {
         this.dispatchEvent(new CustomEvent("judging", {detail: <UUID>topicId}));
     }
 
-    recieveGuess(guessedPlayerId : UUID) {
+    recieveGuess(guessedPlayerId : NetworkID) {
         console.log("Passing on the guess " + guessedPlayerId);
-        this.dispatchEvent(new CustomEvent("guess", {detail: <UUID>guessedPlayerId}));
+        this.dispatchEvent(new CustomEvent("guess", {detail: <NetworkID>guessedPlayerId}));
     }
 
     recieveContinue() {

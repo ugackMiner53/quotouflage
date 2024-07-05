@@ -1,4 +1,4 @@
-import type { UUID, Player, Topic, Message } from "$lib/Types";
+import type { UUID, Player, Topic, Message, NetworkID } from "$lib/Types";
 import type NetworkManager from "./NetworkManager";
 import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 import { MessageType, type WebsocketMessage } from "../../server/GameServer";
@@ -47,21 +47,20 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
         const message : WebsocketMessage = JSON.parse(messageEvent.data);
         switch (message.type) {
             case MessageType.JOIN: {
-                console.log("Hey, someone joined! Sending self!")
+                console.log("Hey, someone joined! Not sending anything, the server should do that!!")
                 if (gameManager.hosting) {
-                    this.sendWebsocketMessage({type: MessageType.HOST, data: gameManager.self.uuid});
+                    // this.sendWebsocketMessage({type: MessageType.DETAILS, data: gameManager.self.networkId});
                 }
                 this.dispatchEvent(new Event("join"));
                 // this.createAndDispatchEvent("join", )
                 break;
             }
             case MessageType.LEAVE: {
-                this.dispatchEvent(new Event("leave"));
-                // this.createAndDispatchEvent("leave", )
+                this.createAndDispatchEvent("leave", <NetworkID>message.data);
                 break;
             }
-            case MessageType.HOST: {
-                this.createAndDispatchEvent("host", <UUID>message.data);
+            case MessageType.DETAILS: {
+                this.createAndDispatchEvent("details", <NetworkID>message.data);
                 break;
             }
             case MessageType.PLAYERS: {
@@ -114,7 +113,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
     sendJudging(topicId: UUID): void {
         this.sendWebsocketMessage({type: MessageType.JUDGING, data: topicId});
     }
-    sendGuess(messageId: UUID): void {
+    sendGuess(messageId: NetworkID): void {
         this.sendWebsocketMessage({type: MessageType.GUESS, data: messageId})
     }
     sendContinue(): void {

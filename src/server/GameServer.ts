@@ -1,9 +1,11 @@
 import { WebSocket, WebSocketServer } from "ws";
+import { v6 as uuidv6 } from "uuid";
+
 
 export enum MessageType {
     JOIN,
     LEAVE,
-    HOST,
+    DETAILS,
     PLAYERS,
     TOPICS,
     MESSAGES,
@@ -17,7 +19,7 @@ export type WebsocketMessage = {
     data : unknown
 }
 
-type GameSocket = WebSocket & {room? : Room}
+type GameSocket = WebSocket & {room? : Room, uuid : string}
 
 export default class GameServer {
     websocketServer : WebSocketServer;
@@ -41,12 +43,15 @@ export default class GameServer {
                         const room = <Room>this.rooms.get(code)
                         room.connectPlayer(socket);
                         socket.room = room;
+                        room.host.send(JSON.stringify({type: MessageType.JOIN}));
                     } else {
                         // TODO If room does not exist & user is not creating room, then reject join and tell user
+                        console.log(`Making room ${code} and sending details`);
                         const room = new Room(socket, code);
                         this.rooms.set(code, room);
                         socket.room = room;
                     }
+                    this.sendDetails(socket);
                     break;
                 }
                 case MessageType.LEAVE: {
@@ -57,13 +62,16 @@ export default class GameServer {
                     break;
                 }
 
-                case MessageType.MESSAGES:
-                {
+                case MessageType.MESSAGES: {
                     socket.room?.sendToOthers(message, socket);
                     break;
                 }
 
-                case MessageType.HOST:
+                // case MessageType.DETAILS: {
+                //     this.sendDetails(socket, (<{host: string}>message.data).host);
+                //     break;
+                // }
+
                 case MessageType.TOPICS:
                 case MessageType.JUDGING:
                 case MessageType.CONTINUE:
@@ -84,6 +92,24 @@ export default class GameServer {
                 }
             }
         })
+
+        socket.on("close", () => {
+            if (socket.room) {
+                socket.room.disconnectPlayer(socket);
+                if (socket.room.players.length <= 0) {
+                    console.log(`No players found in ${socket.room.code}, deleting!`);
+                    this.rooms.delete(socket.room.code);
+                }
+            }
+        })
+    }
+
+    sendDetails(socket : GameSocket) {
+        socket.uuid = uuidv6();
+        const host = socket.room?.host.uuid;
+
+        const message = {type: MessageType.DETAILS, data: {self: socket.uuid, host: host}};
+        socket.send(JSON.stringify(message));
     }
 
     reset() {
@@ -125,5 +151,10 @@ class Room {
     connectPlayer(player : GameSocket) {
         this.players.push(player);
         this.sendToOthers({type: MessageType.JOIN, data: null}, player)
+    }
+
+    disconnectPlayer(player : GameSocket) {
+        this.players = this.players.filter(socket => socket.uuid !== player.uuid);
+        this.sendToOthers({type: MessageType.LEAVE, data: player.uuid}, player);
     }
 }

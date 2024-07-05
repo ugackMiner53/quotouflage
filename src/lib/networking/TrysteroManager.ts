@@ -1,7 +1,7 @@
 import { type ActionReceiver, type ActionSender, type DataPayload, type Room } from "trystero";
 import { joinRoom } from "trystero/torrent";
 import type NetworkManager from "./NetworkManager";
-import { type UUID, type Message, type Player, type Topic } from "$lib/Types";
+import { type UUID, type Message, type Player, type Topic, type NetworkID } from "$lib/Types";
 import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 import { gameManager } from "$lib/Static";
 
@@ -51,7 +51,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         // Add events for peer join/leave
         this.roomConnection?.onPeerJoin(() => {
             if (gameManager.hosting) {
-                this.sendHost!(gameManager.self.uuid);
+                this.sendHost!(gameManager.self.networkId);
             }
             this.dispatchEvent(new Event("join"));
         });
@@ -64,7 +64,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         // Connect actions to events
         recieveHost((data : DataPayload, peerId : string) => {
             this.hostPeerId = peerId;
-            this.createAndDispatchEvent("host", <UUID>data);
+            this.createAndDispatchEvent("host", <NetworkID>data);
         });
 
         recievePlayers((data : DataPayload, peerId : string) => {
@@ -94,7 +94,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         });
 
         recieveGuess(data => {
-            this.createAndDispatchEvent("guess", <UUID>data);
+            this.createAndDispatchEvent("guess", <NetworkID>data);
         });
 
         recieveContinue((data, peerId) => {

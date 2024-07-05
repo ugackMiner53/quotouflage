@@ -3,7 +3,7 @@
     import { goto } from "$app/navigation";
     import { PUBLIC_PIN_LENGTH } from "$env/static/public";
     import { gameManager, createNewGameManager } from "$lib/Static";
-    import type { UUID } from "$lib/Types";
+    import type { NetworkID } from "$lib/Types";
     import { getRandomEmoji } from "$lib/Utility";
     import ChooseName from "$lib/components/ChooseName.svelte";
     import Connecting from "$lib/components/Connecting.svelte";
@@ -85,7 +85,7 @@
             createNewGameManager(name);
         } else {
             gameManager.updateSelf({
-                uuid: <UUID>crypto.randomUUID(),
+                networkId: <NetworkID>"NO NETWORK ID INITIALIZED",
                 name,
                 emoji: getRandomEmoji(),
                 score: 0

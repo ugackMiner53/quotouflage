@@ -1,14 +1,14 @@
 <script lang="ts">
     import { gameManager } from "$lib/Static";
-    import type { Topic, Message, UUID } from "$lib/Types";
+    import type { Topic, Message, NetworkID } from "$lib/Types";
     import { createEventDispatcher } from "svelte";
 
     
     export let topic : Topic;
-    export let guessedPlayer : UUID|null = null;
+    export let guessedPlayer : NetworkID|null = null;
 
-    const judge = gameManager.uuidToPlayer(topic.judge);
-    const about = gameManager.uuidToPlayer(topic.about);
+    const judge = gameManager.networkIdToPlayer(topic.judge);
+    const about = gameManager.networkIdToPlayer(topic.about);
 
     const dispatch = createEventDispatcher();
 
@@ -19,10 +19,10 @@
     }
 
     function isJudging() : boolean {
-        return topic.judge === gameManager.self.uuid;
+        return topic.judge === gameManager.self.networkId;
     }
 
-    function guess(guessedPlayerId : UUID) {
+    function guess(guessedPlayerId : NetworkID) {
         console.log("YOU GUESSED " + (guessedPlayerId === topic.about))
         gameManager.sendGuess(guessedPlayerId);
     }
@@ -30,7 +30,7 @@
 
 <div class="holder">
     <div class="prompt">
-        {#if topic.judge === gameManager.self.uuid}
+        {#if topic.judge === gameManager.self.networkId}
             <h1>Find which sentence was written by {`${about?.emoji} ${about?.name}`} about {topic.topic}</h1>
         {:else}
             <h1>{`${judge?.emoji} ${judge?.name}`} is looking for {`${about?.emoji} ${about?.name}`} writing about {topic.topic}</h1>
@@ -44,7 +44,7 @@
                 disabled={!isJudging() || guessedPlayer != null} 
                 class={`option ${guessedPlayer == message.author ? "guess" : ""} ${guessedPlayer != null && (message.author == topic.about) ? "about" : ""}`}
             >
-                    {(isJudging() && !guessedPlayer) ? "" : gameManager.uuidToPlayer(message.author)?.emoji ?? ""} {message.message}
+                    {(isJudging() && !guessedPlayer) ? "" : gameManager.networkIdToPlayer(message.author)?.emoji ?? ""} {message.message}
             </button>
         {/each}
     </div>
