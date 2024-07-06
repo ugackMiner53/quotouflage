@@ -1,5 +1,5 @@
 import { type ActionReceiver, type ActionSender, type DataPayload, type Room } from "trystero";
-import { joinRoom } from "trystero/torrent";
+import { joinRoom, selfId } from "trystero/torrent";
 import type NetworkManager from "./NetworkManager";
 import { type UUID, type Message, type Player, type Topic, type NetworkID } from "$lib/Types";
 import { PUBLIC_PIN_LENGTH } from "$env/static/public";
@@ -39,8 +39,8 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         if (!this.roomConnection) return;
 
         // Create actions
-        let recieveHost : ActionReceiver<DataPayload>, recievePlayers : ActionReceiver<DataPayload>, recieveTopics : ActionReceiver<DataPayload>, recieveMessages : ActionReceiver<DataPayload>, recieveJudging : ActionReceiver<DataPayload>, recieveGuess : ActionReceiver<DataPayload>, recieveContinue : ActionReceiver<DataPayload>;
-        [this.sendHost, recieveHost] = this.roomConnection.makeAction("host");  
+        let recieveDetails : ActionReceiver<DataPayload>, recievePlayers : ActionReceiver<DataPayload>, recieveTopics : ActionReceiver<DataPayload>, recieveMessages : ActionReceiver<DataPayload>, recieveJudging : ActionReceiver<DataPayload>, recieveGuess : ActionReceiver<DataPayload>, recieveContinue : ActionReceiver<DataPayload>;
+        [this.sendDetails, recieveDetails] = this.roomConnection.makeAction("details");  
         [this.sendPlayers, recievePlayers] = this.roomConnection.makeAction("players");
         [this.sendTopics, recieveTopics] = this.roomConnection.makeAction("topics");
         [this.sendMessages, recieveMessages] = this.roomConnection.makeAction("messages");
@@ -51,20 +51,20 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         // Add events for peer join/leave
         this.roomConnection?.onPeerJoin(() => {
             if (gameManager.hosting) {
-                this.sendHost!(gameManager.self.networkId);
+                this.sendDetails!(gameManager.self.networkId);
             }
             this.dispatchEvent(new Event("join"));
         });
 
-        // TODO Not sure how to handle players leaving when we don't know their ID from GameManager and we don't know the players from TrysteroManager
-        this.roomConnection?.onPeerLeave(() => {
+        this.roomConnection?.onPeerLeave((peerId) => {
             this.dispatchEvent(new Event("leave"));
+            this.createAndDispatchEvent("leave", peerId)
         });
 
         // Connect actions to events
-        recieveHost((data : DataPayload, peerId : string) => {
+        recieveDetails((data : DataPayload, peerId : string) => {
             this.hostPeerId = peerId;
-            this.createAndDispatchEvent("host", <NetworkID>data);
+            this.createAndDispatchEvent("details", <{self: NetworkID, host: NetworkID}>{self: selfId, host: data});
         });
 
         recievePlayers((data : DataPayload, peerId : string) => {
@@ -113,7 +113,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
 
     //#region Gameplay Events
 
-    sendHost? : ActionSender<DataPayload>;
+    sendDetails? : ActionSender<DataPayload>;
     
     //@ts-expect-error Trystero needs these functions to be ActionSenders, which is trystero specific and cannot be encapsulated in NetworkManager
     sendPlayers? : ActionSender<DataPayload>;
