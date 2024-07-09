@@ -178,6 +178,12 @@ export default class GameManager extends EventTarget {
     }
     //#region Network Events
 
+    tryStartJudging() {
+        if (this.hosting && this.messages.length >= this.topics.length * (get(this.players).length-1)) {
+            this.sendJudging(this.topics[0].uuid)
+        }
+    }
+
     playerJoined() {
         if (this.hosting) {
             console.log("Someone joined, I'm leaving the NetworkManager to take care of that");
@@ -188,6 +194,9 @@ export default class GameManager extends EventTarget {
         this.players.update((players) => {
             return players.filter(player => player.networkId !== disconnectedPlayer);
         });
+        this.dispatchEvent(new CustomEvent("leave", {detail: disconnectedPlayer}))
+        // NOTE: This makes it so that if a player submits some messages then leaves, the game will start judging prematurely
+        this.tryStartJudging();
     }
 
     recievePlayers(players : Player[], fromHost : boolean) {
@@ -217,10 +226,7 @@ export default class GameManager extends EventTarget {
         console.log("Recieved Messages!");
         this.messages = this.messages.concat(messages);
         this.dispatchEvent(new CustomEvent("messageAuthor", {detail: <NetworkID>messages[0].author}))
-
-        if (this.hosting && this.messages.length >= this.topics.length * (get(this.players).length-1)) {
-            this.sendJudging(this.topics[0].uuid)
-        }
+        this.tryStartJudging();
     }
 
     recieveJudging(topicId : UUID) {

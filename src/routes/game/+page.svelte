@@ -59,6 +59,7 @@
     gameManager.addEventListener("guess", onGuess);
     gameManager.addEventListener("continue", onContinue);
     gameManager.addEventListener("messageAuthor", onMessageAuthor)
+    gameManager.addEventListener("leave", onPlayerLeave)
 
     function onJudging(event : CustomEventInit<UUID>) {
         console.log("Judging event bubbled up to game +page.svelte!");
@@ -95,6 +96,12 @@
         $submittedPlayers = $submittedPlayers;
     }
 
+    function onPlayerLeave(event : CustomEventInit<NetworkID>) {
+        if (currentTopic?.judge == event.detail) {
+            guessedUUID = <NetworkID>"NO NETWORK ID: JUDGE LEFT";
+        }
+    }
+
 
     function onContinue() {
         if (currentTopicIndex >= gameManager.topics.length && currentTopic == null) {
@@ -105,6 +112,7 @@
             gameManager.removeEventListener("guess", onGuess);
             gameManager.removeEventListener("continue", onContinue);
             gameManager.removeEventListener("messageAuthor", onMessageAuthor);
+            gameManager.removeEventListener("leave", onPlayerLeave);
             goto("/lobby");
         }
 

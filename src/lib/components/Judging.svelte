@@ -50,7 +50,7 @@
     </div>
 
     {#if gameManager.hosting && guessedPlayer}
-        <button on:click={() => {dispatch("continue"); console.log("fierst")}} class="continue">Continue</button>
+        <button on:click={() => {dispatch("continue")}} class="continue">Continue</button>
     {/if}
 
 </div>
