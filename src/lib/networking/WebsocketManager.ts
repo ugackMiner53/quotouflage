@@ -26,7 +26,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
         // Generate new room code
         const code = crypto.randomUUID().replaceAll("-", "").substring(0, parseInt(PUBLIC_PIN_LENGTH)).toUpperCase()
         this.connectToWebsocket().then(() => {
-            this.sendWebsocketMessage({type: MessageType.JOIN, data: code});
+            this.sendWebsocketMessage({type: MessageType.JOIN, data: {code: code, create: true}});
         });
         return code;
     }
@@ -35,7 +35,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
         if (!this.websocket) {
             await this.connectToWebsocket();
         }
-        this.sendWebsocketMessage({type: MessageType.JOIN, data: code});
+        this.sendWebsocketMessage({type: MessageType.JOIN, data: {code: code, create: false}});
     }
 
     sendWebsocketMessage(object : WebsocketMessage) {

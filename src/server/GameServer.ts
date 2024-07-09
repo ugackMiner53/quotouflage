@@ -38,23 +38,21 @@ export default class GameServer {
             const message : WebsocketMessage = JSON.parse(messageStr);
             switch (message.type) {
                 case MessageType.JOIN: {
-                    const code = <string>message.data;
-                    if (this.rooms.has(code)) {
-                        const room = <Room>this.rooms.get(code)
+                    const data = <{code: string, create: boolean}>message.data;
+                    if (this.rooms.has(data.code)) {
+                        const room = <Room>this.rooms.get(data.code)
                         room.connectPlayer(socket);
                         socket.room = room;
                         room.host.send(JSON.stringify({type: MessageType.JOIN}));
-                    } else {
-                        // TODO If room does not exist & user is not creating room, then reject join and tell user
-                        console.log(`Making room ${code} and sending details`);
-                        const room = new Room(socket, code);
-                        this.rooms.set(code, room);
+                        this.sendDetails(socket);
+                    } else if (data.create) {
+                        // TODO Tell user that code is incorrect :/
+                        console.log(`Making room ${data.code} and sending details`);
+                        const room = new Room(socket, data.code);
+                        this.rooms.set(data.code, room);
                         socket.room = room;
+                        this.sendDetails(socket);
                     }
-                    this.sendDetails(socket);
-                    break;
-                }
-                case MessageType.LEAVE: {
                     break;
                 }
                 case MessageType.PLAYERS: {
