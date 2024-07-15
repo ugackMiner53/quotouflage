@@ -3,6 +3,7 @@ import type NetworkManager from "./NetworkManager";
 import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 import { MessageType, type WebsocketMessage } from "../../server/GameServer";
 import { gameManager } from "$lib/Static";
+import { getRandomUUID } from "$lib/Utility";
 
 export default class WebsocketManager extends EventTarget implements NetworkManager {
 
@@ -24,7 +25,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
 
     createNewRoom() : string {
         // Generate new room code
-        const code = crypto.randomUUID().replaceAll("-", "").substring(0, parseInt(PUBLIC_PIN_LENGTH)).toUpperCase()
+        const code = getRandomUUID().replaceAll("-", "").substring(0, parseInt(PUBLIC_PIN_LENGTH)).toUpperCase()
         this.connectToWebsocket().then(() => {
             this.sendWebsocketMessage({type: MessageType.JOIN, data: {code: code, create: true}});
         });

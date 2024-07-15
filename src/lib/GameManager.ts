@@ -1,7 +1,7 @@
 import { get, writable, type Writable } from "svelte/store";
 import TrysteroManager from "./networking/TrysteroManager";
 import { type UUID, type Message, type Player, type Topic, type NetworkID } from "./Types";
-import { getRandomEmoji, getRandomTopic } from "./Utility";
+import { getRandomEmoji, getRandomTopic, getRandomUUID } from "./Utility";
 import { goto } from "$app/navigation";
 import { PUBLIC_ADAPTER } from "$env/static/public";
 import WebsocketManager from "./networking/WebsocketManager";
@@ -109,7 +109,7 @@ export default class GameManager extends EventTarget {
 
             Promise.all(get(this.players).map(async (player, index) => {
                 topics.push({
-                    uuid: <UUID>crypto.randomUUID(),
+                    uuid: getRandomUUID(),
                     about: player.networkId,
                     judge: topicJudges[index],
                     topic: await getRandomTopic(),

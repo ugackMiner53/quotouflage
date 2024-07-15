@@ -1,3 +1,6 @@
+import type { UUID } from "./Types";
+import { v4 as uuidv4 } from "uuid";
+
 const EMOJI_LIST = "😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗😚😙🥲😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😶😏😒🙄😬🤥😌😔😪🤤😴😷🤒🤕🤢🤮🤧🥵🥶🥴😵🤯🤠🥳🥸😎🤓🧐😕😟🙁😮😯😲😳🥺😦😧😨😰😥😢😭😱😖😣😞😓😩😫🥱😤😡😠🤬😈👿💀💩🤡👹👺👻👽😺😸😹😻😼😽🙀😿"
 
 
@@ -20,4 +23,12 @@ export async function getRandomTopic() : Promise<string> {
 async function loadTopics() : Promise<string[]> {
     const topicsString = await (await fetch("/topics.txt")).text();
     return topicsString.split("\n")
+}
+
+export function getRandomUUID() : UUID {
+    if (crypto.randomUUID) {
+        return <UUID>crypto.randomUUID();
+    } else {
+        return <UUID>uuidv4();
+    }
 }

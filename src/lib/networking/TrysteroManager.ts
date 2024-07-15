@@ -4,6 +4,7 @@ import type NetworkManager from "./NetworkManager";
 import { type UUID, type Message, type Player, type Topic, type NetworkID } from "$lib/Types";
 import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 import { gameManager } from "$lib/Static";
+import { getRandomUUID } from "$lib/Utility";
 
 const APP_ID = "quotouflage-debug";
 
@@ -16,7 +17,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
     
     createNewRoom() : string {
         // Generate new room code
-        const code = crypto.randomUUID().replaceAll("-", "").substring(0, parseInt(PUBLIC_PIN_LENGTH)).toUpperCase()
+        const code = getRandomUUID().replaceAll("-", "").substring(0, parseInt(PUBLIC_PIN_LENGTH)).toUpperCase()
         this.roomConnection = joinRoom({appId: APP_ID}, code)
         console.log(`Attempted to create room ${code}`);
         this.createMethods();
