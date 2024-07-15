@@ -11,13 +11,17 @@ export function getRandomEmoji(): string {
 
 
 
-let topics : string[]|undefined;
+export let topics : string[]|undefined;
 
 export async function getRandomTopic() : Promise<string> {
     if (!topics) {
         topics = await loadTopics();
     }
     return topics[Math.floor(Math.random()*topics.length)]
+}
+
+export function updateTopics(newTopics : string[]) {
+    topics = newTopics;
 }
 
 async function loadTopics() : Promise<string[]> {

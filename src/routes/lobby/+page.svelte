@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import Settings from "$lib/components/Settings.svelte";
     import { gameManager } from "$lib/Static";
     import type { Player } from "$lib/Types";
     import type { Writable } from "svelte/store";
@@ -9,10 +10,17 @@
     }
 
     const players : Writable<Player[]> = gameManager.players;
+
+    let showingSettings = false;
 </script>
+
+{#if showingSettings}
+    <Settings on:save={() => {showingSettings = false}} />
+{/if}
 
 <h1 class="gamecode">{gameManager.gameCode}</h1>
 {#if gameManager.hosting}
+    <button class="settings" on:click={() => {showingSettings = true}}>SETTINGS</button>
     <button disabled={$players.length < 3} class="start" on:click={gameManager.startGame.bind(gameManager)}>GO!</button>
 {/if}
 
@@ -35,9 +43,17 @@
         margin-left: 3vw;
     }
 
+    .settings {
+        bottom: 0;
+        right: 0;
+    }
+
     .start {
         top: 0;
         right: 0;
+    }
+
+    button {
         margin: 2vw;
         font-size: 5vw;
         background: none;
@@ -49,12 +65,12 @@
         border-radius: 12px;
     }
 
-    .start:disabled {
+    button:disabled {
         cursor: not-allowed;
         border: 3px dashed lightgray;
     }
 
-    .start:hover:not(:disabled) {
+    button:hover:not(:disabled) {
         border: 3px solid black;
         background: lightgray;
     }
