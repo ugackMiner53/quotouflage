@@ -204,6 +204,7 @@
         border-bottom: 3px solid black;
         z-index: -1;
         text-transform: uppercase;
+        pointer-events: none;
     }
 
     .create {
