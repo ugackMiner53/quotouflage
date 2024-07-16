@@ -49,7 +49,7 @@
         {/each}
     </div>
 
-    {#if gameManager.hosting && guessedPlayer}
+    {#if gameManager.hosting && (!judge || guessedPlayer)}
         <button on:click={() => {dispatch("continue")}} class="continue">Continue</button>
     {/if}
 

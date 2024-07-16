@@ -15,6 +15,7 @@ export default class GameManager extends EventTarget {
 
     // Round specific variables
     players : Writable<Player[]> = writable([]);
+    submittedPlayers : Writable<Set<NetworkID>> = writable(new Set<NetworkID>());
     topics : Topic[] = [];
     messages : Message[] = [];
 
@@ -179,7 +180,17 @@ export default class GameManager extends EventTarget {
     //#region Network Events
 
     tryStartJudging() {
-        if (this.hosting && this.messages.length >= this.topics.length * (get(this.players).length-1)) {
+        if (!this.hosting) return;
+
+        const submittedPlayers = get(this.submittedPlayers);
+        
+        let anyoneNotSubmitted = false;
+        
+        get(this.players).forEach(player => {
+            anyoneNotSubmitted = anyoneNotSubmitted || !submittedPlayers.has(player.networkId);
+        })
+
+        if (!anyoneNotSubmitted) {
             this.sendJudging(this.topics[0].uuid)
         }
     }
@@ -225,7 +236,9 @@ export default class GameManager extends EventTarget {
     recieveMessages(messages : Message[]) {
         console.log("Recieved Messages!");
         this.messages = this.messages.concat(messages);
-        this.dispatchEvent(new CustomEvent("messageAuthor", {detail: <NetworkID>messages[0].author}))
+        this.submittedPlayers.update(players => {
+            return players.add(<NetworkID>messages[0].author);
+        })
         this.tryStartJudging();
     }
 

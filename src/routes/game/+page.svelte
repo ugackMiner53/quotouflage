@@ -1,11 +1,10 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { gameManager } from "$lib/Static";
-    import type { Message, NetworkID, Player, Topic, UUID } from "$lib/Types";
+    import type { Message, NetworkID, Topic, UUID } from "$lib/Types";
     import Judging from "$lib/components/Judging.svelte";
     import Scorecard from "$lib/components/Scorecard.svelte";
     import Writing from "$lib/components/Writing.svelte";
-    import { writable } from "svelte/store";
 
     if (!gameManager) {
         goto("/join");
@@ -19,7 +18,7 @@
     let guessedUUID : NetworkID|null = null;
 
     const players = gameManager.players;
-    const submittedPlayers = writable(new Set<NetworkID>())
+    const submittedPlayers = gameManager.submittedPlayers;
     
     //#region Writing
     const personalMessages : Message[] = [];
@@ -58,7 +57,6 @@
     gameManager.addEventListener("judging", onJudging);
     gameManager.addEventListener("guess", onGuess);
     gameManager.addEventListener("continue", onContinue);
-    gameManager.addEventListener("messageAuthor", onMessageAuthor)
     gameManager.addEventListener("leave", onPlayerLeave)
 
     function onJudging(event : CustomEventInit<UUID>) {
@@ -91,11 +89,6 @@
         // AI Clause here in the future
     }
 
-    function onMessageAuthor(event : CustomEventInit<NetworkID>) {
-        $submittedPlayers.add(event.detail!);
-        $submittedPlayers = $submittedPlayers;
-    }
-
     function onPlayerLeave(event : CustomEventInit<NetworkID>) {
         if (currentTopic?.judge == event.detail) {
             guessedUUID = <NetworkID>"NO NETWORK ID: JUDGE LEFT";
@@ -111,7 +104,6 @@
             gameManager.removeEventListener("judging", onJudging);
             gameManager.removeEventListener("guess", onGuess);
             gameManager.removeEventListener("continue", onContinue);
-            gameManager.removeEventListener("messageAuthor", onMessageAuthor);
             gameManager.removeEventListener("leave", onPlayerLeave);
             goto("/lobby");
         }
