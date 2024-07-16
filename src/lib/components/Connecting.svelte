@@ -2,50 +2,66 @@
     import { PUBLIC_ADAPTER } from "$env/static/public";
     import { createEventDispatcher } from "svelte";
     import Popup from "./Popup.svelte";
+    import { gameManager } from "$lib/Static";
 
     export let gameCode : string;
     export let connectedPeers = 0;
+    
+    let invalidCode = false;
+
+    gameManager.addEventListener("invalid", onInvalid)
+
+    function onInvalid() {
+        invalidCode = true;
+    }
+
 
     const dispatch = createEventDispatcher()
 </script>
 
 <Popup>
-    <div>
-        <h1>Connecting...</h1>
-        <h3>We're doing our best to connect you to {gameCode}!</h3>
-    </div>
 
-    <div class="lds-default">
-        <div /><div /><div /><div /><div /><div /><div /><div /><div /><div /><div /><div />
-    </div>
-
-    {#if PUBLIC_ADAPTER === "trystero"}
-        {#if connectedPeers > 0}
-            <p>Currently connected to <b>{connectedPeers}</b> other players and waiting for a host!</p>
-        {:else}
-            <p>Looking for peers on {gameCode}...</p>
-        {/if}
-
-        <p>
-            You're connecting using <a href="https://github.com/dmotz/trystero" target="_blank">trystero</a>. 
-            For better connection times, try hosting Quotouflage yourself! 
-            Instructions are on the <a href="https://github.com/ugackMiner53/quotouflage" target="_blank">Github</a>!
-        </p>
-    {:else if PUBLIC_ADAPTER === "websocket"}
-        <p>Currently connecting to the server...</p>
-
-        <p>
-            You're connecting using Websockets, the fastest and most stable method!
-            Thank you for playing Quotouflage!
-        </p>
+    {#if invalidCode}
+        <h1>Invalid Code</h1>
+        <p>{gameCode} was refused by the server!</p>
     {:else}
-        <p>
-            You're connecting using {PUBLIC_ADAPTER}, which is a custom configuration.
-            Help requests on our <a href="https://github.com/ugackMiner53/quotouflage" target="_blank">Github</a> for custom network adapters will be ignored!
-        </p>
+        <div>
+            <h1>Connecting...</h1>
+            <h3>We're doing our best to connect you to {gameCode}!</h3>
+        </div>
+
+        <div class="lds-default">
+            <div /><div /><div /><div /><div /><div /><div /><div /><div /><div /><div /><div />
+        </div>
+
+        {#if PUBLIC_ADAPTER === "trystero"}
+            {#if connectedPeers > 0}
+                <p>Currently connected to <b>{connectedPeers}</b> other players and waiting for a host!</p>
+            {:else}
+                <p>Looking for peers on {gameCode}...</p>
+            {/if}
+
+            <p>
+                You're connecting using <a href="https://github.com/dmotz/trystero" target="_blank">trystero</a>. 
+                For better connection times, try hosting Quotouflage yourself! 
+                Instructions are on the <a href="https://github.com/ugackMiner53/quotouflage" target="_blank">Github</a>!
+            </p>
+        {:else if PUBLIC_ADAPTER === "websocket"}
+            <p>Currently connecting to the server...</p>
+
+            <p>
+                You're connecting using Websockets, the fastest and most stable method!
+                Thank you for playing Quotouflage!
+            </p>
+        {:else}
+            <p>
+                You're connecting using {PUBLIC_ADAPTER}, which is a custom configuration.
+                Help requests on our <a href="https://github.com/ugackMiner53/quotouflage" target="_blank">Github</a> for custom network adapters will be ignored!
+            </p>
+        {/if}
     {/if}
 
-    <button class="cancel" on:click={() => {dispatch("cancel")}}>Cancel</button>
+    <button class="cancel" on:click={() => {gameManager.removeEventListener("invalid", onInvalid); dispatch("cancel");}}>Cancel</button>
 </Popup>
 
 <style>

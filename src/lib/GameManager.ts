@@ -130,6 +130,10 @@ export default class GameManager extends EventTarget {
             this.playerLeft(event.detail!);
         });
 
+        this.networkManager.addEventListener("invalid", (event : CustomEventInit<string>) => {
+            this.recieveInvalid(event.detail!);
+        })
+
         this.networkManager.addEventListener("players", (event : CustomEventInit<{players: Player[], isHost : boolean}>) => {
             this.recievePlayers(event.detail!.players, event.detail!.isHost);
         })
@@ -210,6 +214,11 @@ export default class GameManager extends EventTarget {
         this.tryStartJudging();
     }
 
+    recieveInvalid(reason : string) {
+        console.error(`Server issued invalid. Reason: ${reason}`);
+        this.dispatchEvent(new Event("invalid"));
+    }
+
     recievePlayers(players : Player[], fromHost : boolean) {
         if (fromHost) {
             this.players.set(players);
@@ -249,7 +258,7 @@ export default class GameManager extends EventTarget {
 
     recieveGuess(guessedPlayerId : NetworkID) {
         console.log("Passing on the guess " + guessedPlayerId);
-        this.dispatchEvent(new CustomEvent("guess", {detail: <NetworkID>guessedPlayerId}));
+        this.dispatchEvent(new CustomEvent("guess", {detail: guessedPlayerId}));
     }
 
     recieveContinue() {

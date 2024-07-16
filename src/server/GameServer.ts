@@ -5,6 +5,7 @@ import { v6 as uuidv6 } from "uuid";
 export enum MessageType {
     JOIN,
     LEAVE,
+    INVALID,
     DETAILS,
     PLAYERS,
     TOPICS,
@@ -52,6 +53,8 @@ export default class GameServer {
                         this.rooms.set(data.code, room);
                         socket.room = room;
                         this.sendDetails(socket);
+                    } else {
+                        socket.send(JSON.stringify({type: MessageType.INVALID, data: "Invalid Code"}))
                     }
                     break;
                 }

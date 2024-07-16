@@ -60,6 +60,10 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
                 this.createAndDispatchEvent("leave", <NetworkID>message.data);
                 break;
             }
+            case MessageType.INVALID: {
+                this.createAndDispatchEvent("invalid", <string>message.data);
+                break;
+            }
             case MessageType.DETAILS: {
                 this.createAndDispatchEvent("details", <NetworkID>message.data);
                 break;
