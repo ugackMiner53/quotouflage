@@ -102,13 +102,11 @@ export default class GameManager extends EventTarget {
             const topicJudges = players.map(player => player.networkId);
             for (let i=topicJudges.length-1; i>0; i--) {
                 const randomIndex = Math.floor(Math.random()*(i-1));
-                const tmp = topicJudges[randomIndex];
-                topicJudges[randomIndex] = topicJudges[i];
-                topicJudges[i] = tmp;
+                [topicJudges[i], topicJudges[randomIndex]] = [topicJudges[randomIndex], topicJudges[i]];
             }
 
 
-            Promise.all(get(this.players).map(async (player, index) => {
+            Promise.all(players.map(async (player, index) => {
                 topics.push({
                     uuid: getRandomUUID(),
                     about: player.networkId,
@@ -209,8 +207,22 @@ export default class GameManager extends EventTarget {
         this.players.update((players) => {
             return players.filter(player => player.networkId !== disconnectedPlayer);
         });
+
+        if (disconnectedPlayer === this.hostId) {
+            // Update host to first sorted player (hopefully sorting will make it consistent across devices)
+            const players = get(this.players);
+            players.sort((a, b) => {
+                return a > b ? 1 : -1;
+            })
+
+            console.log(`Updating host to ${players[0].networkId}`);
+
+            // players[0].emoji = "👑";
+            this.hostId = players[0].networkId;
+            this.hosting = players[0].networkId === this.self.networkId;
+        }
+
         this.dispatchEvent(new CustomEvent("leave", {detail: disconnectedPlayer}))
-        // NOTE: This makes it so that if a player submits some messages then leaves, the game will start judging prematurely
         this.tryStartJudging();
     }
 

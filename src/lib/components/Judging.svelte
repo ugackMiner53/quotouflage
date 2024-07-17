@@ -13,9 +13,17 @@
     const dispatch = createEventDispatcher();
 
     function getMessagesAboutTopic() : Message[] {
-        return gameManager.messages.filter(message => {
+        const msgs = gameManager.messages.filter(message => {
             return message.topic === topic.uuid;
         })
+
+        console.log("RANDOMIZING");
+        // Fisher-Yates shuffle to randomize messages
+        for (let i = msgs.length - 1; i > 0; i--) {
+            const randIndex = Math.floor(Math.random() * (i + 1));
+            [msgs[i], msgs[randIndex]] = [msgs[randIndex], msgs[i]];
+        }
+        return msgs;
     }
 
     function isJudging() : boolean {
