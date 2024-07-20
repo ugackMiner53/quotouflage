@@ -3,7 +3,8 @@
     import Settings from "$lib/components/Settings.svelte";
     import { gameManager } from "$lib/Static";
     import type { Player } from "$lib/Types";
-    import { onMount, onDestroy } from "svelte";
+    import { enableWakeLock } from "$lib/Utility";
+    import { onMount } from "svelte";
     import type { Writable } from "svelte/store";
 
     if (!gameManager) {
@@ -14,6 +15,8 @@
     const hosting = gameManager.hosting;
 
     let showingSettings = false;
+
+    onMount(enableWakeLock);
 </script>
 
 {#if showingSettings}
