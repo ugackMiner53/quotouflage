@@ -19,10 +19,8 @@
     <button on:click={() => {showAbout = true;}}>About</button>
 </section>
 
-<!-- Github Image -->
-
 <footer transition:fade={{duration: 300}}>
-
+    <a class="source" href="https://github.com/ugackMiner53/quotouflage">Source Code</a>
     <a class="privacy" href="/privacy">Privacy</a>
 </footer>
 
@@ -70,6 +68,11 @@
         bottom: 0;
         height: 5vh;
         width: 100%;
+    }
+
+    footer > .source {
+        position: absolute;
+        left: 7vw;
     }
 
     footer > .privacy {

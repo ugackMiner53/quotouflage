@@ -7,10 +7,6 @@ import { gameManager } from "$lib/Static";
 import { getRandomUUID } from "$lib/Utility";
 import { get } from "svelte/store";
 
-// type TrysteroPlayer = Player & {peerId : string}
-
-const APP_ID = (await import("$env/static/public")).PUBLIC_TRYSTERO_APPID;
-
 export default class TrysteroManager extends EventTarget implements NetworkManager {
 
     roomConnection? : Room;
@@ -18,15 +14,17 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
     createNewRoom() : string {
         // Generate new room code
         const code = getRandomUUID().replaceAll("-", "").substring(0, parseInt(PUBLIC_PIN_LENGTH)).toUpperCase()
-        this.roomConnection = joinRoom({appId: APP_ID}, code)
-        console.log(`Attempted to create room ${code}`);
-        this.createAndDispatchEvent("details", <{self: NetworkID, host: NetworkID}>{self: selfId, host: selfId});
-        this.createMethods();
+        import("$env/static/public").then(env => {
+            this.roomConnection = joinRoom({appId: env.PUBLIC_TRYSTERO_APPID}, code)
+            console.log(`Attempted to create room ${code}`);
+            this.createAndDispatchEvent("details", <{self: NetworkID, host: NetworkID}>{self: selfId, host: selfId});
+            this.createMethods();
+        })
         return code;
     }
     
-    connectToRoom(code: string): Promise<void> {
-        this.roomConnection = joinRoom({appId: APP_ID}, code);
+    async connectToRoom(code: string): Promise<void> {
+        this.roomConnection = joinRoom({appId: (await import("$env/static/public")).PUBLIC_TRYSTERO_APPID}, code);
 
         return new Promise(resolve => {
             this.roomConnection?.onPeerJoin(() => {
