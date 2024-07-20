@@ -48,10 +48,6 @@ export default class GameManager extends EventTarget {
     }
 
     createGame() {
-        this.gameCode = this.networkManager.createNewRoom();
-        this.hosting.set(true);
-        this.self.emoji = "👑";
-
         const recieveGameDetails = (event : CustomEventInit<{self: NetworkID, host: NetworkID}>) => {
             console.log("Recieved Self ID");
             this.self.networkId = event.detail!.self;
@@ -59,6 +55,10 @@ export default class GameManager extends EventTarget {
         };
 
         this.networkManager.addEventListener("details", recieveGameDetails);
+
+        this.gameCode = this.networkManager.createNewRoom();
+        this.hosting.set(true);
+        this.self.emoji = "👑";
     } 
 
     async joinGame(code : string, signal : AbortSignal) : Promise<void> {
@@ -207,6 +207,9 @@ export default class GameManager extends EventTarget {
     playerJoined() {}
 
     playerLeft(disconnectedPlayer : NetworkID) {
+        console.log(get(this.players));
+        console.log(disconnectedPlayer);
+
         this.players.update((players) => {
             return players.filter(player => player.networkId !== disconnectedPlayer);
         });

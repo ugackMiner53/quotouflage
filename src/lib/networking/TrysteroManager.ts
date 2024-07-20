@@ -7,20 +7,20 @@ import { gameManager } from "$lib/Static";
 import { getRandomUUID } from "$lib/Utility";
 import { get } from "svelte/store";
 
-const APP_ID = "quotouflage-debug";
-
 // type TrysteroPlayer = Player & {peerId : string}
+
+const APP_ID = (await import("$env/static/public")).PUBLIC_TRYSTERO_APPID;
 
 export default class TrysteroManager extends EventTarget implements NetworkManager {
 
     roomConnection? : Room;
-    hostPeerId? : string;
     
     createNewRoom() : string {
         // Generate new room code
         const code = getRandomUUID().replaceAll("-", "").substring(0, parseInt(PUBLIC_PIN_LENGTH)).toUpperCase()
         this.roomConnection = joinRoom({appId: APP_ID}, code)
         console.log(`Attempted to create room ${code}`);
+        this.createAndDispatchEvent("details", <{self: NetworkID, host: NetworkID}>{self: selfId, host: selfId});
         this.createMethods();
         return code;
     }
@@ -59,13 +59,12 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         });
 
         this.roomConnection?.onPeerLeave((peerId) => {
-            this.dispatchEvent(new Event("leave"));
+            console.log(`Peer ${peerId} left game!`);
             this.createAndDispatchEvent("leave", peerId)
         });
 
         // Connect actions to events
-        recieveDetails((data : DataPayload, peerId : string) => {
-            this.hostPeerId = peerId;
+        recieveDetails((data : DataPayload) => {
             this.createAndDispatchEvent("details", <{self: NetworkID, host: NetworkID}>{self: selfId, host: data});
         });
 
@@ -74,13 +73,13 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
                 "players", 
                 {
                     players: <Player[]>data,
-                    isHost: peerId === this.hostPeerId
+                    isHost: peerId === gameManager.hostId
                 }
             );
         });
 
         recieveTopics((data : DataPayload, peerId : string) => {
-            if (peerId === this.hostPeerId) {
+            if (peerId === gameManager.hostId) {
                 this.createAndDispatchEvent("topics", <Topic[]>data);
             }
         });
@@ -90,7 +89,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         });
 
         recieveJudging((data, peerId) => {
-            if (peerId === this.hostPeerId) {
+            if (peerId === gameManager.hostId) {
                 this.createAndDispatchEvent("judging", <UUID>data);
             }
         });
@@ -100,7 +99,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
         });
 
         recieveContinue((data, peerId) => {
-            if (peerId === this.hostPeerId) {
+            if (peerId === gameManager.hostId) {
                 this.dispatchEvent(new Event("continue"));
             }
         })
