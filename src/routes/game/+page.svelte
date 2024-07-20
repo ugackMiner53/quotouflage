@@ -5,6 +5,7 @@
     import Judging from "$lib/components/Judging.svelte";
     import Scorecard from "$lib/components/Scorecard.svelte";
     import Writing from "$lib/components/Writing.svelte";
+    import { onDestroy, onMount } from "svelte";
 
     if (!gameManager) {
         goto("/join");
@@ -54,11 +55,6 @@
 
     //#region Judging
 
-    gameManager.addEventListener("judging", onJudging);
-    gameManager.addEventListener("guess", onGuess);
-    gameManager.addEventListener("continue", onContinue);
-    gameManager.addEventListener("leave", onPlayerLeave)
-
     function onJudging(event : CustomEventInit<UUID>) {
         console.log("Judging event bubbled up to game +page.svelte!");
         if (writing) {
@@ -99,12 +95,6 @@
     function onContinue() {
         if (currentTopicIndex >= gameManager.topics.length && currentTopic == null) {
             console.log("Going back to lobby!");
-            // Without this, the event listeners get registered multiple times, leading to multiple score additions
-            // TODO: Not do it this way. If this gets missed for any reason (which it shouldn't), then we have an event listener mess!
-            gameManager.removeEventListener("judging", onJudging);
-            gameManager.removeEventListener("guess", onGuess);
-            gameManager.removeEventListener("continue", onContinue);
-            gameManager.removeEventListener("leave", onPlayerLeave);
             goto("/lobby");
         }
 
@@ -113,6 +103,20 @@
     }
 
     //#endregion
+
+    onMount(() => {
+        gameManager.addEventListener("judging", onJudging);
+        gameManager.addEventListener("guess", onGuess);
+        gameManager.addEventListener("continue", onContinue);
+        gameManager.addEventListener("leave", onPlayerLeave);
+    })
+
+    onDestroy(() => {
+        gameManager.removeEventListener("judging", onJudging);
+        gameManager.removeEventListener("guess", onGuess);
+        gameManager.removeEventListener("continue", onContinue);
+        gameManager.removeEventListener("leave", onPlayerLeave);
+    })
 
 </script>
 

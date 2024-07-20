@@ -157,5 +157,13 @@ class Room {
     disconnectPlayer(player : GameSocket) {
         this.players = this.players.filter(socket => socket.uuid !== player.uuid);
         this.sendToOthers({type: MessageType.LEAVE, data: player.uuid}, player);
+
+        if (this.host === player && this.players.length > 0) {            
+            this.players.sort((a, b) => {
+                return a.uuid > b.uuid ? 1 : -1;
+            });
+
+            this.host = this.players[0];
+        }
     }
 }

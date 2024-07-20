@@ -1,7 +1,7 @@
 <script lang="ts">
     import { gameManager } from "$lib/Static";
     import type { Topic, Message, NetworkID } from "$lib/Types";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
     
     export let topic : Topic;
@@ -9,6 +9,7 @@
 
     const judge = gameManager.networkIdToPlayer(topic.judge);
     const about = gameManager.networkIdToPlayer(topic.about);
+    const hosting = gameManager.hosting;
 
     const dispatch = createEventDispatcher();
 
@@ -49,7 +50,7 @@
         {/each}
     </div>
 
-    {#if gameManager.hosting && (!judge || guessedPlayer)}
+    {#if $hosting && (!judge || guessedPlayer)}
         <button on:click={() => {dispatch("continue")}} class="continue">Continue</button>
     {/if}
 

@@ -5,6 +5,7 @@ import { type UUID, type Message, type Player, type Topic, type NetworkID } from
 import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 import { gameManager } from "$lib/Static";
 import { getRandomUUID } from "$lib/Utility";
+import { get } from "svelte/store";
 
 const APP_ID = "quotouflage-debug";
 
@@ -51,7 +52,7 @@ export default class TrysteroManager extends EventTarget implements NetworkManag
 
         // Add events for peer join/leave
         this.roomConnection?.onPeerJoin(() => {
-            if (gameManager.hosting) {
+            if (get(gameManager.hosting)) {
                 this.sendDetails!(gameManager.self.networkId);
             }
             this.dispatchEvent(new Event("join"));

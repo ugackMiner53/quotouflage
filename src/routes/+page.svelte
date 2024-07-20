@@ -1,5 +1,5 @@
 <script>
-    import { fade, blur, scale } from "svelte/transition";
+    import { fade, scale } from "svelte/transition";
     import { goto } from "$app/navigation";
 </script>
 

@@ -10,7 +10,7 @@ export default class GameManager extends EventTarget {
     networkManager : TrysteroManager|WebsocketManager;
     gameCode? : string;
     hostId? : NetworkID;
-    hosting : boolean = false;
+    hosting : Writable<boolean> = writable(false);
     self : Player;
 
     // Round specific variables
@@ -49,7 +49,7 @@ export default class GameManager extends EventTarget {
 
     createGame() {
         this.gameCode = this.networkManager.createNewRoom();
-        this.hosting = true;
+        this.hosting.set(true);
         this.self.emoji = "👑";
 
         const recieveGameDetails = (event : CustomEventInit<{self: NetworkID, host: NetworkID}>) => {
@@ -75,7 +75,7 @@ export default class GameManager extends EventTarget {
                 console.log("Recieved Host");
                 this.self.networkId = event.detail!.self;
                 this.hostId = event.detail!.host;
-                this.hosting = this.self.networkId === this.hostId;
+                this.hosting.set(this.self.networkId === this.hostId);
                 this.networkManager.sendPlayers!(get(this.players));
                 resolve();
             };
@@ -90,7 +90,7 @@ export default class GameManager extends EventTarget {
     }
 
     startGame() {
-        if (this.hosting) {
+        if (get(this.hosting)) {
             const topics : Topic[] = [];
 
             const players = get(this.players);
@@ -174,7 +174,7 @@ export default class GameManager extends EventTarget {
 
     sendContinue() {
         console.log("IM TRYING TO SEND CONTINUE")
-        if (this.hosting) {
+        if (get(this.hosting)) {
             this.recieveContinue();
             this.networkManager.sendContinue!(null);
         }
@@ -182,8 +182,6 @@ export default class GameManager extends EventTarget {
     //#region Network Events
 
     tryStartJudging() {
-        // if (!this.hosting) return;
-
         const submittedPlayers = get(this.submittedPlayers);
         
         let anyoneNotSubmitted = false;
@@ -200,17 +198,13 @@ export default class GameManager extends EventTarget {
                 [this.messages[i], this.messages[randIndex]] = [this.messages[randIndex], this.messages[i]];
             }
 
-            if (this.hosting) {
+            if (get(this.hosting)) {
                 this.sendJudging(this.topics[0].uuid)
             }
         }
     }
 
-    playerJoined() {
-        if (this.hosting) {
-            console.log("Someone joined, I'm leaving the NetworkManager to take care of that");
-        }
-    }
+    playerJoined() {}
 
     playerLeft(disconnectedPlayer : NetworkID) {
         this.players.update((players) => {
@@ -221,14 +215,14 @@ export default class GameManager extends EventTarget {
             // Update host to first sorted player (hopefully sorting will make it consistent across devices)
             const players = get(this.players);
             players.sort((a, b) => {
-                return a > b ? 1 : -1;
+                return a.networkId > b.networkId ? 1 : -1;
             })
 
             console.log(`Updating host to ${players[0].networkId}`);
 
-            // players[0].emoji = "👑";
+            players[0].emoji = "👑";
             this.hostId = players[0].networkId;
-            this.hosting = players[0].networkId === this.self.networkId;
+            this.hosting.set(players[0].networkId === this.self.networkId);
         }
 
         this.dispatchEvent(new CustomEvent("leave", {detail: disconnectedPlayer}))
@@ -241,14 +235,15 @@ export default class GameManager extends EventTarget {
     }
 
     recievePlayers(players : Player[], fromHost : boolean) {
+        const hosting = get(this.hosting);
         if (fromHost) {
             this.players.set(players);
-        } else if (this.hosting && !fromHost && players.length == 1) {
+        } else if (hosting && !fromHost && players.length == 1) {
             this.players.update(newPlayers => {
                 newPlayers.push(players[0]);
                 return newPlayers;
             })
-            if (this.hosting) {
+            if (hosting) {
                 this.networkManager.sendPlayers!(get(this.players));
             }
         }

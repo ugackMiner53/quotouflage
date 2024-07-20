@@ -1,8 +1,9 @@
 <script lang="ts">
     import { gameManager } from "$lib/Static";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
     const players = gameManager.players;
+    const hosting = gameManager.hosting;
 
     export let finalRound : boolean = false;
 
@@ -24,7 +25,7 @@
         {/each}
     </div>
     
-    {#if gameManager.hosting}
+    {#if $hosting}
         <button on:click={() => {dispatch("continue")}} class="continue">{finalRound ? "End Game" : "Continue"}</button>
     {/if}
 

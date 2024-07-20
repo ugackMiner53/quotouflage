@@ -1,22 +1,26 @@
 <script lang="ts">
     import { PUBLIC_ADAPTER } from "$env/static/public";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onDestroy, onMount } from "svelte";
     import Popup from "./Popup.svelte";
     import { gameManager } from "$lib/Static";
 
     export let gameCode : string;
     export let connectedPeers = 0;
     
+    const dispatch = createEventDispatcher()
     let invalidCode = false;
-
-    gameManager.addEventListener("invalid", onInvalid)
 
     function onInvalid() {
         invalidCode = true;
     }
 
+    onMount(() => {
+        gameManager.addEventListener("invalid", onInvalid)
+    })
 
-    const dispatch = createEventDispatcher()
+    onDestroy(() => {
+        gameManager.removeEventListener("invalid", onInvalid);
+    })
 </script>
 
 <Popup>
@@ -61,7 +65,7 @@
         {/if}
     {/if}
 
-    <button class="cancel" on:click={() => {gameManager.removeEventListener("invalid", onInvalid); dispatch("cancel");}}>Cancel</button>
+    <button class="cancel" on:click={() => {dispatch("cancel");}}>Cancel</button>
 </Popup>
 
 <style>

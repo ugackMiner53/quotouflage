@@ -3,6 +3,7 @@
     import Settings from "$lib/components/Settings.svelte";
     import { gameManager } from "$lib/Static";
     import type { Player } from "$lib/Types";
+    import { onMount, onDestroy } from "svelte";
     import type { Writable } from "svelte/store";
 
     if (!gameManager) {
@@ -10,6 +11,7 @@
     }
 
     const players : Writable<Player[]> = gameManager.players;
+    const hosting = gameManager.hosting;
 
     let showingSettings = false;
 </script>
@@ -19,7 +21,7 @@
 {/if}
 
 <h1 class="gamecode">{gameManager.gameCode}</h1>
-{#if gameManager.hosting}
+{#if $hosting}
     <button class="settings" on:click={() => {showingSettings = true}}>SETTINGS</button>
     <button disabled={$players.length < 3} class="start" on:click={gameManager.startGame.bind(gameManager)}>GO!</button>
 {/if}

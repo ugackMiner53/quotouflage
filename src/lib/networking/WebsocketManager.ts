@@ -2,7 +2,6 @@ import type { UUID, Player, Topic, Message, NetworkID } from "$lib/Types";
 import type NetworkManager from "./NetworkManager";
 import { PUBLIC_PIN_LENGTH } from "$env/static/public";
 import { MessageType, type WebsocketMessage } from "../../server/GameServer";
-import { gameManager } from "$lib/Static";
 import { getRandomUUID } from "$lib/Utility";
 
 export default class WebsocketManager extends EventTarget implements NetworkManager {
@@ -48,12 +47,7 @@ export default class WebsocketManager extends EventTarget implements NetworkMana
         const message : WebsocketMessage = JSON.parse(messageEvent.data);
         switch (message.type) {
             case MessageType.JOIN: {
-                console.log("Hey, someone joined! Not sending anything, the server should do that!!")
-                if (gameManager.hosting) {
-                    // this.sendWebsocketMessage({type: MessageType.DETAILS, data: gameManager.self.networkId});
-                }
                 this.dispatchEvent(new Event("join"));
-                // this.createAndDispatchEvent("join", )
                 break;
             }
             case MessageType.LEAVE: {
