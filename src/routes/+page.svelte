@@ -1,13 +1,22 @@
 <script>
     import { fade, scale } from "svelte/transition";
     import { goto } from "$app/navigation";
+    import Popup from "$lib/components/Popup.svelte";
+    import About from "$lib/components/About.svelte";
+
+    let showAbout = false;
+
 </script>
+
+{#if showAbout}    
+    <About on:close={() => {showAbout = false}} />
+{/if}
 
 <h1 class="title" in:scale={{delay: 300, start: 100}} out:scale={{duration: 300, start: 5}}>Quotouflage</h1>
 
 <section class="buttons" in:scale={{delay: 300}} out:scale={{duration: 300}}>
     <button on:click={() => goto("/join")}>Play</button>
-    <button>About</button>
+    <button on:click={() => {showAbout = true;}}>About</button>
 </section>
 
 <!-- Github Image -->
