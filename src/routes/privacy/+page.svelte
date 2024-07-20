@@ -2,6 +2,7 @@
 <script>
     import { fade } from "svelte/transition";
     import { PUBLIC_ADAPTER } from "$env/static/public";
+    import { base } from "$app/paths";
 </script>
 
 <h1 in:fade={{delay: 300}} out:fade={{delay: 0, duration: 300}}>Privacy</h1>
@@ -38,7 +39,7 @@
     </p>
 </section>
 
-<a class="back" href="/" in:fade={{delay: 300}} out:fade={{delay: 0, duration: 300}}>Go Back</a>
+<a class="back" href="{base}/" in:fade={{delay: 300}} out:fade={{delay: 0, duration: 300}}>Go Back</a>
 
 <style>
     h1 {

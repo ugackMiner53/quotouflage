@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { base } from "$app/paths";
     import { gameManager } from "$lib/Static";
     import type { Message, NetworkID, Topic, UUID } from "$lib/Types";
     import Judging from "$lib/components/Judging.svelte";
@@ -8,7 +9,7 @@
     import { onDestroy, onMount } from "svelte";
 
     if (!gameManager) {
-        goto("/join");
+        goto(`${base}/join`);
     }
 
 
@@ -95,7 +96,7 @@
     function onContinue() {
         if (currentTopicIndex >= gameManager.topics.length && currentTopic == null) {
             console.log("Going back to lobby!");
-            goto("/lobby");
+            goto(`${base}/lobby`);
         }
 
         console.log("Recieved Continue, setting topic to null");

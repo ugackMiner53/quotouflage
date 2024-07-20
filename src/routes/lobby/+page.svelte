@@ -1,5 +1,6 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
+    import { base } from "$app/paths";
     import Settings from "$lib/components/Settings.svelte";
     import { gameManager } from "$lib/Static";
     import type { Player } from "$lib/Types";
@@ -8,7 +9,7 @@
     import type { Writable } from "svelte/store";
 
     if (!gameManager) {
-        goto("/join");
+        goto(`${base}/join`);
     }
 
     const players : Writable<Player[]> = gameManager.players;

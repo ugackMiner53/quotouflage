@@ -5,6 +5,7 @@ import { getRandomEmoji, getRandomTopic, getRandomUUID } from "./Utility";
 import { goto } from "$app/navigation";
 import { PUBLIC_ADAPTER } from "$env/static/public";
 import WebsocketManager from "./networking/WebsocketManager";
+import { base } from "$app/paths";
 
 export default class GameManager extends EventTarget {
     networkManager : TrysteroManager|WebsocketManager;
@@ -258,7 +259,7 @@ export default class GameManager extends EventTarget {
         for (const player of get(this.players)) {
             player.score = 0;
         }
-        goto("/game");
+        goto(`${base}/game`);
     }
 
     recieveMessages(messages : Message[]) {

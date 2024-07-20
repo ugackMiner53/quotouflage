@@ -1,6 +1,7 @@
 <script lang="ts">
     import { browser } from "$app/environment";
     import { goto } from "$app/navigation";
+    import { base } from "$app/paths";
     import { PUBLIC_PIN_LENGTH } from "$env/static/public";
     import { gameManager, createNewGameManager } from "$lib/Static";
     import type { NetworkID } from "$lib/Types";
@@ -62,7 +63,7 @@
         abortConnectionController = new AbortController();
         gameManager.joinGame(pinCode.join("").toUpperCase(), abortConnectionController.signal).then(() => {
             console.log(`Joined ${pinCode.join("").toUpperCase()} correctly`)
-            goto("/lobby");    
+            goto(`${base}/lobby`);    
             $connecting = false;
         }).catch(() => {
             console.log(`Did not join ${pinCode.join("").toUpperCase()} correctly`)
@@ -77,7 +78,7 @@
 
         updateManager($name);
         gameManager.createGame();
-        goto("/lobby")
+        goto(`${base}/lobby`)
     }
 
     function updateManager(name : string) {

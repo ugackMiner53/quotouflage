@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { base } from "$app/paths";
 import type { UUID } from "./Types";
 import { v4 as uuidv4 } from "uuid";
 
@@ -51,7 +52,7 @@ export function updateTopics(newTopics : string[]) {
 }
 
 async function loadTopics() : Promise<string[]> {
-    const topicsString = await (await fetch("/topics.txt")).text();
+    const topicsString = await (await fetch(`${base}/topics.txt`)).text();
     return topicsString.split("\n")
 }
 
