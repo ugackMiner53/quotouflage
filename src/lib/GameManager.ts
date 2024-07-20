@@ -182,7 +182,7 @@ export default class GameManager extends EventTarget {
     //#region Network Events
 
     tryStartJudging() {
-        if (!this.hosting) return;
+        // if (!this.hosting) return;
 
         const submittedPlayers = get(this.submittedPlayers);
         
@@ -193,7 +193,16 @@ export default class GameManager extends EventTarget {
         })
 
         if (!anyoneNotSubmitted) {
-            this.sendJudging(this.topics[0].uuid)
+            // Shuffle Messages using Fisher-Yates
+            console.log("Shuffling Messages")
+            for (let i = this.messages.length - 1; i > 0; i--) {
+                const randIndex = Math.floor(Math.random() * (i + 1));
+                [this.messages[i], this.messages[randIndex]] = [this.messages[randIndex], this.messages[i]];
+            }
+
+            if (this.hosting) {
+                this.sendJudging(this.topics[0].uuid)
+            }
         }
     }
 
