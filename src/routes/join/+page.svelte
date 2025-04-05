@@ -14,8 +14,7 @@
     const PIN_LENGTH = parseInt(PUBLIC_PIN_LENGTH)
 
     let name : Writable<string|undefined> = writable(browser ? localStorage.getItem("name") ?? undefined : undefined);
-    let pinInputs : HTMLInputElement[] = [];
-    let pinCode : string[] = [];
+    let pinCode : string = "";
 
     // Room connection status
     let connecting = writable(false);
@@ -23,34 +22,9 @@
 
     let abortConnectionController : AbortController;
 
-    function onPinClick() {
-        if (pinCode.length < 0 || pinCode.length >= PIN_LENGTH) return;
-
-        pinInputs[pinCode.length].focus();
-    }
-
-    function handlePinInput(event : Event, elem : number) {
-        const target = event.target as HTMLInputElement;
-
-        if (target.value == "") {
-            pinCode.splice(-1)
-            if (pinCode.length > 0) pinInputs[pinCode.length-1].select();
-        } else {
-            pinCode[elem] = target.value;
-            onPinClick();
-        }
-        
+    function handlePinInput() {
         if (pinCode.length == PIN_LENGTH) {
             joinGame()
-        }
-    }
-
-    function handlePinBack(inputEvent : KeyboardEvent) {
-        if (pinCode.length <= 0) return;
-
-        if (inputEvent.key === "Backspace" && (<HTMLInputElement>inputEvent.target).value == "") {
-            inputEvent.preventDefault();
-            pinInputs[pinCode.length-1].select();
         }
     }
 
@@ -61,12 +35,12 @@
         updateManager($name);
         $connecting = true;
         abortConnectionController = new AbortController();
-        gameManager.joinGame(pinCode.join("").toUpperCase(), abortConnectionController.signal).then(() => {
-            console.log(`Joined ${pinCode.join("").toUpperCase()} correctly`)
+        gameManager.joinGame(pinCode.toUpperCase(), abortConnectionController.signal).then(() => {
+            console.log(`Joined ${pinCode.toUpperCase()} correctly`)
             goto(`${base}/lobby`);    
             $connecting = false;
         }).catch(() => {
-            console.log(`Did not join ${pinCode.join("").toUpperCase()} correctly`)
+            console.log(`Did not join ${pinCode.toUpperCase()} correctly`)
             // TODO: Consider showing an error message here at some point
             $connecting = false;
         })
@@ -104,15 +78,12 @@
     <!-- TODO: Actually give this the correct number of connected peers :/ -->
     <Connecting 
         on:cancel={() => {
-            pinCode = []
-            pinInputs.forEach(input => {
-                input.value = "";
-            })
+            pinCode = ""
             abortConnectionController.abort();
             $connecting = false;
         }} 
         connectedPeers={$connectedPeers} 
-        gameCode={pinCode.join("").toUpperCase()} 
+        gameCode={pinCode.toUpperCase()} 
     />
 {/if}
 
@@ -124,12 +95,7 @@
 
     <section out:fade={{delay:0, duration: 300}}>
         <h1 class="title">Join Game</h1>
-        <button class="pin-input" on:focus={onPinClick}>
-            {#each {length: PIN_LENGTH} as _, i}
-                <input bind:this={pinInputs[i]} on:input={(e) => {handlePinInput(e, i)}} on:keydown={handlePinBack} type="text" maxlength="1" tabindex="-1">
-            {/each}
-            <!-- <button>GO</button> -->
-        </button>
+        <input bind:value={pinCode} on:input={(e) => handlePinInput()} type="text" maxlength={PIN_LENGTH}/>
     </section>
     
     <section out:fade={{delay:0, duration: 300}}>

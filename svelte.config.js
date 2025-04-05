@@ -19,7 +19,7 @@ const config = async() => {
             adapter,
             paths: {
                 // This will be different for you if you don't want your base path to be /quotouflage!
-                base: "/quotouflage"
+                // base: "/quotouflage"
             }
         }
     }

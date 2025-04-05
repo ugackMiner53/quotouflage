@@ -3,7 +3,7 @@ import { WebSocketServer } from "ws";
 import { handler } from "./build/handler.js";
 import GameServer from "./src/server/GameServer";
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 80;
 const server = createServer(<RequestListener<typeof IncomingMessage, typeof ServerResponse>>handler);
 
 const wss = new WebSocketServer({ noServer: true });
