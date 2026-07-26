@@ -1,7 +1,5 @@
-<style>
-    :global(*) {
-        font-family: Arial, Helvetica, sans-serif;
-    }
-</style>
+<script lang="ts">
+    import "../app.css";
+</script>
 
 <slot />

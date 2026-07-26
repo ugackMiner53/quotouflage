@@ -5,6 +5,7 @@ import { v6 as uuidv6 } from "uuid";
 export enum MessageType {
     JOIN,
     LEAVE,
+    RECONNECT,
     INVALID,
     DETAILS,
     PLAYERS,
@@ -58,6 +59,14 @@ export default class GameServer {
                     }
                     break;
                 }
+
+                case MessageType.RECONNECT: {
+                    const data = <{uuid: string}>message.data;
+                    
+                    break;
+                }
+
+                    
                 case MessageType.PLAYERS: {
                     socket.room?.sendToOthers({type: MessageType.PLAYERS, data: {players: message.data, isHost: socket.room?.host === socket}}, socket)
                     break;
@@ -129,10 +138,14 @@ class Room {
     code : string;
     players : GameSocket[];
 
+    messageQueue : WebsocketMessage[];
+
     constructor(host : GameSocket, code : string) {
         this.host = host;
         this.players = [host];
         this.code = code;
+
+        this.messageQueue = [];
     }
 
     authenticatedSendToOthers(data : WebsocketMessage, socket : GameSocket, expected : GameSocket = this.host) {
@@ -152,6 +165,16 @@ class Room {
     connectPlayer(player : GameSocket) {
         this.players.push(player);
         this.sendToOthers({type: MessageType.JOIN, data: null}, player)
+    }
+
+    reconnectPlayer(uuid: string, newPlayer: GameSocket) {
+        for (const [i, player] of this.players.entries()) {
+            if (player.uuid === uuid && player.readyState !== WebSocket.OPEN) {
+                this.players[i] = newPlayer;
+                player.close();
+                break;
+            }
+        }
     }
 
     disconnectPlayer(player : GameSocket) {
